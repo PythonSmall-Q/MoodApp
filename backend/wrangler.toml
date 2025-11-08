@@ -6,7 +6,7 @@ compatibility_date = "2024-09-23"
 [[d1_databases]]
 binding = "DB"
 database_name = "feeling"
-database_id = "11fa52fb-aca5-4b6a-a9dc-93b332739f20"
+database_id = ""
 # database_id will be auto-provisioned in dev. For production, create with `wrangler d1 create mood-app-db`
 # and then put the generated ID under the production env section below.
 
@@ -14,7 +14,7 @@ database_id = "11fa52fb-aca5-4b6a-a9dc-93b332739f20"
 # Uncomment and set your real database_id after `wrangler d1 create mood-app-db`
 [[env.production.d1_databases]]
 binding = "DB"
-database_id = "11fa52fb-aca5-4b6a-a9dc-93b332739f20"
+database_id = ""
 
 # wrangler.toml (wrangler v3.88.0^)
 [observability]
@@ -34,8 +34,9 @@ crons = ["0 16 * * *"]
 [[kv_namespaces]]
 binding = "WORDS"
 # Fill in your KV namespace ID after creation (wrangler kv namespace create WORDS)
-id = "a87533ecfaff43ef9dbc768b7d9e53a1"
+id = ""
 
 [[analytics_engine_datasets]]
 binding = "feeling"
 dataset = "feeling"
+
