@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>服务健康检查 — Mood App</title>
+  <script src="./api-config.js"></script>
+  <link rel="stylesheet" href="/frontend/styles.css">
+  <style>
+    body{display:flex;align-items:flex-start;gap:20px;padding:28px}
+    .panel{background:#fff;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.06);padding:18px;max-width:840px;width:100%}
+    .controls{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+    pre{background:#f8fafc;padding:12px;border-radius:8px;overflow:auto}
+    .status-ok{color:var(--success);font-weight:700}
+    .status-fail{color:var(--danger);font-weight:700}
+    /* maintenance popup */
+    #maint-popup { position: fixed; top: 18px; right: 18px; max-width: 360px; background: #fff; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 12px 14px; z-index: 1200; display: none; }
+    #maint-popup h4 { margin: 0 0 6px 0; font-size: 14px; }
+    #maint-popup p { margin: 0; font-size: 13px; color: #333; }
+    #maint-popup .close { position: absolute; top: 6px; right: 8px; border: none; background: transparent; font-size: 14px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <h2>服务健康检查</h2>
+    <p class="muted-small">此页面会对 Worker 提供的关键端点进行探测，包括 <code>/api/health</code> 与数据库连通性等，并显示响应、耗时与错误详情（若有）。</p>
+
+    <div class="controls">
+      <button id="btnRefresh" class="btn btn-ghost">刷新所有检查</button>
+      <label style="display:inline-flex;align-items:center;gap:8px;margin-left:8px"><input id="auto" type="checkbox"> 自动刷新（每 5 秒）</label>
+      <div style="margin-left:auto" id="lastChecked">上次检查：—</div>
+    </div>
+
+    <div>
+      <div>总体状态： <span id="overall" class="muted-small">未知</span></div>
+      <h3 style="margin-top:12px">快速检查（默认）</h3>
+      <div style="margin-bottom:8px" class="muted-small">下列检查会逐个执行并报告 http 状态、耗时与错误信息。</div>
+      <table id="checksTable" style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="text-align:left;border-bottom:1px solid #eef2ff"><th>端点</th><th>状态</th><th>HTTP</th><th>耗时 (ms)</th><th>错误/详情</th></tr>
+        </thead>
+        <tbody id="checksBody"></tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top:12px">自定义路径检测</h3>
+    <p class="muted-small">输入任意相对路径（以 <code>/</code> 开头），工具会发起请求并展示状态、耗时与响应体。</p>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <input id="customPath" type="text" placeholder="/api/health" style="flex:1;padding:8px;border-radius:8px;border:1px solid #e6eefc">
+      <button id="btnCheckPath" class="btn btn-ghost">检查路径</button>
+    </div>
+
+    <h3 style="margin-top:12px">响应正文 / 响应头（最近一次）</h3>
+    <pre id="outJson">{ }</pre>
+    <pre id="outHeaders">—</pre>
+
+    <h3 style="margin-top:12px">运维公告（Maintenance）</h3>
+    <div id="maintenanceList" class="muted-small">加载中…</div>
+
+  </div>
+
+  <script>
+    const btnRefresh = document.getElementById('btnRefresh');
+    const outJson = document.getElementById('outJson');
+    const outHeaders = document.getElementById('outHeaders');
+    const overall = document.getElementById('overall');
+    const lastChecked = document.getElementById('lastChecked');
+    const auto = document.getElementById('auto');
+    const customPath = document.getElementById('customPath');
+    const btnCheckPath = document.getElementById('btnCheckPath');
+    const checksBody = document.getElementById('checksBody');
+    const maintenanceList = document.getElementById('maintenanceList');
+    const adminTokenInput = document.getElementById('adminToken');
+    const btnCreateMaintenance = document.getElementById('btnCreateMaintenance');
+    const btnRefreshMaint = document.getElementById('btnRefreshMaint');
+
+    const defaultChecks = ['/api/health', '/api/_health/db'];
+
+    function setOverall(ok) {
+      overall.textContent = ok ? 'OK' : 'FAIL';
+      overall.className = ok ? 'status-ok' : 'status-fail';
+    }
+
+    async function checkOne(path) {
+      const started = performance.now();
+      const row = { path, ok: false, status: null, time_ms: null, body: null, error: null };
+      try {
+        const target = (typeof path === 'string' && path.startsWith('/')) ? apiUrl(path) : path;
+        const res = await fetch(target, { cache: 'no-store' });
+        const ended = performance.now();
+        row.time_ms = Math.round(ended - started);
+        row.status = res.status;
+        let text = await res.text().catch(()=>'');
+        try { row.body = JSON.parse(text); } catch { row.body = text; }
+        row.ok = res.ok;
+      } catch (e) {
+        const ended = performance.now();
+        row.time_ms = Math.round(ended - started);
+        row.error = String(e && (e.message || e));
+        if (e && e.stack) row.stack = e.stack;
+      }
+      return row;
+    }
+
+    function renderChecks(rows) {
+      checksBody.innerHTML = '';
+      let anyFail = false;
+      for (const r of rows) {
+        const tr = document.createElement('tr');
+        const tdPath = document.createElement('td'); tdPath.textContent = r.path;
+        const tdOk = document.createElement('td'); tdOk.textContent = r.ok ? 'OK' : 'FAIL'; tdOk.style.fontWeight = '700'; tdOk.style.color = r.ok ? 'var(--success)' : 'var(--danger)';
+        const tdHttp = document.createElement('td'); tdHttp.textContent = r.status == null ? '-' : String(r.status);
+        const tdTime = document.createElement('td'); tdTime.textContent = r.time_ms == null ? '-' : String(r.time_ms);
+        const tdErr = document.createElement('td');
+        if (r.error) tdErr.textContent = r.error + (r.stack ? '\n' + r.stack : '');
+        else if (r.body && typeof r.body === 'object' && (r.body.error || r.body.error_detail || r.body.stack)) {
+          tdErr.textContent = (r.body.error || '') + '\n' + (r.body.error_detail || '') + (r.body.stack ? '\n' + r.body.stack : '');
+        } else if (r.body && typeof r.body === 'string' && r.body.length > 0) tdErr.textContent = String(r.body).slice(0, 200);
+        else tdErr.textContent = '';
+        tr.appendChild(tdPath); tr.appendChild(tdOk); tr.appendChild(tdHttp); tr.appendChild(tdTime); tr.appendChild(tdErr);
+        checksBody.appendChild(tr);
+        if (!r.ok) anyFail = true;
+      }
+      setOverall(!anyFail);
+    }
+
+    async function runAllChecks() {
+      const checks = Array.from(defaultChecks);
+      // allow additional user-defined endpoints (split by newline in customPath area if provided)
+      const extra = (customPath.value || '').trim();
+      if (extra) checks.push(extra);
+      const results = [];
+      for (const p of checks) {
+        const path = p.startsWith('/') ? p : '/' + p;
+        const r = await checkOne(path);
+        results.push(r);
+        // update last response display with latest
+        outJson.textContent = JSON.stringify(r.body || r.error || {}, null, 2);
+        outHeaders.textContent = JSON.stringify({ status: r.status }, null, 2);
+      }
+      renderChecks(results);
+      lastChecked.textContent = '上次检查：' + new Date().toLocaleString();
+    }
+
+    btnRefresh.addEventListener('click', () => runAllChecks());
+    btnCheckPath.addEventListener('click', async () => {
+      const p = customPath.value || '/api/health';
+      const r = await checkOne(p);
+      outJson.textContent = JSON.stringify(r.body || r.error || {}, null, 2);
+      outHeaders.textContent = JSON.stringify({ status: r.status }, null, 2);
+      renderChecks([r]);
+      lastChecked.textContent = '上次检查：' + new Date().toLocaleString();
+    });
+
+    auto.addEventListener('change', () => {
+      if (auto.checked) {
+        runAllChecks();
+        interval = setInterval(() => runAllChecks(), 5000);
+      } else {
+        clearInterval(interval);
+      }
+    });
+
+    // maintenance list
+    async function refreshMaintenance() {
+      try {
+        const res = await fetch(apiUrl('/api/maintenance'), { cache: 'no-store' });
+        const j = await res.json().catch(()=>null);
+        const list = j?.data?.maintenance || j?.maintenance || [];
+        if (!Array.isArray(list) || list.length === 0) {
+          maintenanceList.textContent = '无计划维护/临时 issue';
+          return;
+        }
+        const html = list.map(m => `
+          <div class="maint-item" data-id="${m.id}" style="padding:8px;border-radius:8px;background:#f8fafc;margin-bottom:8px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+            <div style="flex:1">
+              <strong>${m.title}</strong>
+              <div class="muted-small" style="margin-top:4px">${m.start_time || ''} → ${m.end_time || ''}</div>
+              <div style="margin-top:6px">${(m.details || '').slice(0,300)}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-ghost edit-maint-btn" data-id="${m.id}">编辑</button>
+                <button class="btn btn-danger delete-maint-btn" data-id="${m.id}">删除</button>
+              </div>
+              <div class="muted-small">id: ${m.id} • by ${m.created_by || '—'}</div>
+            </div>
+          </div>`).join('');
+        maintenanceList.innerHTML = html;
+
+        // wire buttons
+        document.querySelectorAll('.delete-maint-btn').forEach(b => b.addEventListener('click', (ev) => {
+          const id = Number(ev.currentTarget.getAttribute('data-id'));
+          deleteMaintenance(id);
+        }));
+        document.querySelectorAll('.edit-maint-btn').forEach(b => b.addEventListener('click', (ev) => {
+          const id = Number(ev.currentTarget.getAttribute('data-id'));
+          const node = ev.currentTarget.closest('.maint-item');
+          if (!node) return;
+          // find item in list
+          const item = list.find(x => Number(x.id) === id);
+          if (item) beginEdit(item);
+        }));
+      } catch (e) {
+        maintenanceList.textContent = '无法读取公告：' + (e && e.message ? e.message : String(e));
+      }
+    }
+
+    btnRefreshMaint.addEventListener('click', () => refreshMaintenance());
+
+    // initial
+    let interval = null;
+    (async () => { await refreshMaintenance(); await runAllChecks(); })();
+
+    // Maintenance popup: show active maintenance in a dismissable top-right box for visitors
+    function showMaintPopup(items) {
+      try {
+        if (!items || !items.length) return;
+        // session dismissal key
+        if (sessionStorage.getItem('maint_popup_dismissed')) return;
+        let popup = document.getElementById('maint-popup');
+        if (!popup) {
+          popup = document.createElement('div');
+          popup.id = 'maint-popup';
+          popup.innerHTML = `<button class="close" aria-label="关闭">✕</button><div id="maint-popup-body"></div>`;
+          document.body.appendChild(popup);
+          popup.querySelector('.close').addEventListener('click', () => { popup.style.display = 'none'; sessionStorage.setItem('maint_popup_dismissed', '1'); });
+        }
+        const body = document.getElementById('maint-popup-body');
+        const html = items.slice(0,3).map(m => `<h4>${escapeHtml(m.title || '(无标题)')}</h4><p>${escapeHtml((m.details||'').slice(0,200))}</p>`).join('<hr>');
+        body.innerHTML = html;
+        popup.style.display = 'block';
+      } catch (e) { console.error('showMaintPopup error', e); }
+    }
+
+    function escapeHtml(s) { return String(s || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+
+    // refreshMaintenance already fetches the list; augment it to show popup for active items
+    const origRefreshMaintenance = refreshMaintenance;
+    async function refreshMaintenanceWithPopup() {
+      await origRefreshMaintenance();
+      try {
+        const res = await fetch(apiUrl('/api/maintenance'), { cache: 'no-store' });
+        const j = await res.json().catch(()=>null);
+        const list = j?.data?.maintenance || j?.maintenance || [];
+        const now = new Date();
+        const active = (list || []).filter(m => {
+          if (!m) return false;
+          if (typeof m.active !== 'undefined' && Number(m.active) === 0) return false;
+          // if start/end present, check interval
+          if (m.start_time || m.end_time) {
+            const start = m.start_time ? new Date(m.start_time) : null;
+            const end = m.end_time ? new Date(m.end_time) : null;
+            if (start && now < start) return false;
+            if (end && now > end) return false;
+          }
+          return true;
+        });
+        if (active.length) showMaintPopup(active);
+      } catch (e) { /* ignore popup errors */ }
+    }
+    // replace usages
+    btnRefreshMaint.removeEventListener('click', () => refreshMaintenance());
+    btnRefreshMaint.addEventListener('click', () => refreshMaintenanceWithPopup());
+    // initial call already exists earlier; call augmented version once
+    (async () => { await refreshMaintenanceWithPopup(); })();
+  </script>
+</body>
+</html>

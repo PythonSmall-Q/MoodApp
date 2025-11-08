@@ -1,0 +1,701 @@
+<!-- 心情记录页面 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心情记录</title>
+  <script src="./api-config.js"></script>
+    <link rel="stylesheet" href="./styles.css">
+    <style>
+        .right-sidebar {
+            width: 220px;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(58,122,254,0.10);
+            margin: 24px 0 24px 0;
+            padding: 24px 18px 18px 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 0;
+            height: calc(100vh - 48px);
+        }
+        .mood-select-title {
+            font-size: 1.1rem;
+            color: #3a7afe;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .mood-emoji-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 18px;
+            justify-content: center;
+        }
+        .mood-emoji-item {
+            width: 38px;
+            height: 38px;
+            font-size: 1.8rem;
+            background: #e3f0ff;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border 0.2s;
+        }
+        .mood-emoji-item.selected {
+            border: 2px solid #3a7afe;
+        }
+        .mood-send-btn {
+            background: linear-gradient(90deg, #3a7afe 0%, #0056b3 100%);
+            color: #fff;
+            border: none;
+            border-radius: 24px;
+            padding: 10px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+            box-shadow: 0 2px 8px rgba(58,122,254,0.12);
+            transition: background 0.2s;
+        }
+        .mood-send-btn:disabled {
+            background: #e3f0ff;
+            color: #bbb;
+            cursor: not-allowed;
+        }
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            background: #f7f8fa;
+            display: flex;
+            min-height: 100vh;
+        }
+        /* 侧边栏样式 */
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(120deg, #e3f0ff 0%, #f7f8fa 100%);
+            box-shadow: 2px 0 16px rgba(58,122,254,0.10);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px 0 24px 0;
+        }
+        .avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3a7afe 60%, #e3f0ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.8rem;
+            font-family: "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji","Segoe UI Symbol","Segoe UI",Arial,sans-serif;
+            color: #fff;
+            margin-bottom: 22px;
+            box-shadow: 0 2px 12px rgba(58,122,254,0.12);
+        }
+        .user-info {
+            text-align: center;
+            margin-bottom: 32px;
+            width: 85%;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(58,122,254,0.08);
+            padding: 18px 0 12px 0;
+        }
+        .user-info .name {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #3a7afe;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        .user-info .interest {
+            font-size: 1.05rem;
+            color: #4caf50;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .user-info .interest::before {
+            content: '🎯';
+            font-size: 1.1rem;
+        }
+        .user-info .mood {
+            font-size: 1.05rem;
+            color: #ff9800;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .user-info .mood::before {
+            content: '😊';
+            font-size: 1.1rem;
+        }
+        .sidebar-bottom {
+            margin-top: auto;
+            width: 100%;
+            text-align: center;
+        }
+        .anonymous-btn {
+            background: #fff;
+            color: #3a7afe;
+            border: 2px solid #3a7afe;
+            border-radius: 8px;
+            padding: 10px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .anonymous-btn:hover {
+            background: #3a7afe;
+            color: #fff;
+        }
+        .mood-record-btn {
+            background: linear-gradient(90deg, #3a7afe 0%, #0056b3 100%);
+            color: #fff;
+            border: none;
+            border-radius: 24px;
+            padding: 12px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(58,122,254,0.12);
+            transition: background 0.2s;
+        }
+        .mood-record-btn:hover {
+            background: linear-gradient(90deg, #0056b3 0%, #3a7afe 100%);
+        }
+        /* 左栏内容同 ai-chat.html，可复用样式 */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            height: 100vh;
+            min-width: 0;
+        }
+        .chat-panel {
+            width: 260px;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(58,122,254,0.10);
+            margin: 24px 0 24px 24px;
+            padding: 24px;
+            min-width: 0;
+            height: calc(100vh - 48px);
+        }
+        .calendar-panel {
+            flex: 2;
+            min-width: 520px;
+            width: 60vw;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(58,122,254,0.10);
+            margin: 24px 24px 24px 0;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            height: calc(100vh - 48px);
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+        .calendar-btn {
+            background: #3a7afe;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 12px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 18px;
+        }
+        .calendar-cell {
+            min-height: 64px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            border-radius: 8px;
+            background: #e3f0ff;
+            color: #3a7afe;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 6px 0 2px 0;
+        }
+        .calendar-cell.today {
+            background: #3a7afe;
+            color: #fff;
+        }
+        .calendar-date {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        .calendar-mood {
+            margin-top: 2px;
+            font-size: 1.3rem;
+            color: #222;
+            font-family: "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji","Segoe UI Symbol","Segoe UI",Arial,sans-serif;
+        }
+        .calendar-mood.none {
+            font-size: 0.95rem;
+            color: #bbb;
+        }
+        .week-summary {
+            width: 100%;
+            background: #f7f8fa;
+            border-radius: 12px;
+            padding: 12px 0 8px 0;
+            box-shadow: 0 2px 8px rgba(58,122,254,0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 16px;
+        }
+        .week-title {
+            font-size: 1.1rem;
+            color: #3a7afe;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .week-days {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            width: 100%;
+        }
+        .week-day {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.95rem;
+            color: #222;
+            width: 14%;
+        }
+        .week-mood-box {
+            width: 38px;
+            height: 38px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(58,122,254,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 4px;
+        }
+        .week-days {
+            display: flex;
+            gap: 10px;
+        }
+        .week-day {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.95rem;
+            color: #222;
+        }
+        .week-mood {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+    <script src="./api-config.js"></script>
+    <script src="./auth-guard.js"></script>
+    <div class="sidebar">
+        <div class="avatar" id="user-avatar">😊</div>
+        <div class="user-info">
+            <div class="name" id="user-name">用户名</div>
+            <div class="interest" id="user-interest">兴趣爱好</div>
+            <div class="mood" id="user-mood">心情</div>
+        </div>
+        <a href="ai-chat.html" class="link-block">
+            <button class="mood-record-btn btn">情绪小助手</button>
+        </a>
+        <a href="anonymous-chat.html" class="link-block">
+            <button class="mood-record-btn btn">匿名聊天</button>
+        </a>
+        <a href="bbs.html" style="width:80%;text-decoration:none;display:block;margin-bottom:18px;">
+            <button class="mood-record-btn" style="width:100%;">情绪留言板</button>
+        </a>
+            <a href="health.html" class="link-block">
+                <button class="mood-record-btn">系统健康</button>
+            </a>
+        <div class="sidebar-bottom">
+            <button class="user-settings-btn" id="user-settings-btn" style="width:80%;margin-bottom:18px;">用户设置</button>
+            <div class="user-settings-dropdown" id="user-settings-dropdown" style="display:none;">
+                <button onclick="editUserSettings()">修改用户设置</button>
+                <button onclick="logoutUser()">登出</button>
+            </div>
+    <style>
+        .user-settings-btn {
+            background: linear-gradient(90deg, #3a7afe 0%, #0056b3 100%);
+            color: #fff;
+            border: none;
+            border-radius: 24px;
+            padding: 12px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 8px rgba(58,122,254,0.12);
+            transition: background 0.2s;
+        }
+        .user-settings-btn:hover {
+            background: linear-gradient(90deg, #0056b3 0%, #3a7afe 100%);
+        }
+        .user-settings-dropdown {
+            position: absolute;
+            left: 32px;
+            bottom: 48px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(58,122,254,0.12);
+            padding: 12px 0;
+            min-width: 140px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .user-settings-dropdown button {
+            background: none;
+            border: none;
+            padding: 10px 24px;
+            font-size: 1rem;
+            color: #3a7afe;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .user-settings-dropdown button:hover {
+            background: #e3f0ff;
+        }
+    </style>
+        </div>
+    </div>
+    <div class="main">
+    <div class="calendar-panel">
+            <div class="calendar-header">
+                <button class="calendar-btn" id="prev-month">上月</button>
+                <span id="calendar-month">2025年9月</span>
+                <button class="calendar-btn" id="next-month">下月</button>
+            </div>
+            <div class="calendar-grid" id="calendar-grid">
+                <!-- 日历格子 -->
+            </div>
+            <div class="week-summary">
+                <div class="week-title">本周心情</div>
+                <div class="week-days" id="week-days">
+                    <!-- 七日心情数据 -->
+                </div>
+            </div>
+        </div>
+        <div class="right-sidebar">
+            <div class="mood-select-title">选择今天心情</div>
+            <div class="mood-emoji-list" id="mood-emoji-list"></div>
+            <div id="mood-status" style="margin-top:6px;color:#3a7afe;font-weight:600;"></div>
+            <button class="mood-send-btn" id="mood-send-btn" disabled>提交心情</button>
+        </div>
+    </div>
+    <script src="./mood-map.js"></script>
+    <script src="./small-popup.js"></script>
+    <script>
+        // 用户设置下拉栏逻辑
+        const userSettingsBtn = document.getElementById('user-settings-btn');
+        const userSettingsDropdown = document.getElementById('user-settings-dropdown');
+        userSettingsBtn.onclick = function(e) {
+            e.stopPropagation();
+            userSettingsDropdown.style.display = userSettingsDropdown.style.display === 'block' ? 'none' : 'block';
+        };
+        document.body.addEventListener('click', function() {
+            userSettingsDropdown.style.display = 'none';
+        });
+        // 退出账户
+        function logoutUser() {
+            document.cookie = 'username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            try { localStorage.removeItem('username'); } catch {}
+            window.location.href = './login.html';
+        }
+        // 修改用户设置（跳转或弹窗）
+        function editUserSettings() {
+            window.location.href = './user-settings.html';
+        }
+        // 获取用户名（cookie 优先，回退 localStorage）
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+            return '';
+        }
+        function getUsername() {
+            const c = getCookie('username');
+            if (c) return c;
+            try { return localStorage.getItem('username') || ''; } catch { return ''; }
+        }
+        const username = getUsername();
+        if (!username) {
+            window.location.href = './login.html';
+        }
+        // 填充侧边栏用户信息
+        // API URL helper: prefer FEELINGS_API_BASE if set (defensive fallback in case fetch monkey-patch didn't run)
+        function apiUrl(path) {
+            try {
+                if (window.FEELINGS_API_BASE) return String(window.FEELINGS_API_BASE).replace(/\/$/, '') + path;
+            } catch (e) {}
+            return path;
+        }
+
+        if (username) {
+            document.getElementById('user-name').textContent = username;
+            fetch(apiUrl(`/api/ai_chat_data?username=${encodeURIComponent(username)}`))
+                .then(r => r.json())
+                .then(resp => {
+                    const data = resp?.data || resp || {};
+                    document.getElementById('user-interest').textContent = data.interest || '兴趣爱好';
+                    const moodText = numberToLabel(data.present_mood) || data.present_mood || '心情';
+                    const moodEmoji = numberToEmoji(data.present_mood) || labelToEmoji(data.present_mood) || '';
+                    document.getElementById('user-mood').textContent = moodEmoji ? `${moodEmoji} ${moodText}` : moodText;
+                })
+                .catch(() => {});
+        }
+        // shared helpers from mood-map.js: numberToLabel, numberToEmoji, labelToEmoji
+    const moodEmojiList = document.getElementById('mood-emoji-list');
+    const moodSendBtn = document.getElementById('mood-send-btn');
+    let selectedMood = null; // 保存提交的情绪数字（1..7）
+
+        function renderMoodEmojiList() {
+            let html = '';
+            moodMap.forEach((m) => {
+                html += `<div class=\"mood-emoji-item\" data-n=\"${m.n}\" title=\"${m.label}\">${m.emoji}</div>`;
+            });
+            moodEmojiList.innerHTML = html;
+                Array.from(moodEmojiList.children).forEach(item => {
+                    item.onclick = function() {
+                        // 若今日已记录，点击不再启用按钮
+                        const now = new Date();
+                        const key = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
+                        const todayLocked = !!(calendarMoodData[key] && calendarMoodData[key].emoji);
+                        Array.from(moodEmojiList.children).forEach(i => i.classList.remove('selected'));
+                        item.classList.add('selected');
+                        selectedMood = parseInt(item.getAttribute('data-n'));
+                        const statusDiv = document.getElementById('mood-status');
+                        if (todayLocked) {
+                            statusDiv.textContent = '今日已记录';
+                            moodSendBtn.disabled = true;
+                        } else {
+                            statusDiv.textContent = '';
+                            moodSendBtn.disabled = false;
+                        }
+                    };
+                });
+        }
+        renderMoodEmojiList();
+
+        moodSendBtn.onclick = function() {
+            if (selectedMood === null) return;
+            const moodNumber = String(selectedMood); // 1..7
+            // send both numeric and textual/emoji representations so server and AI receive readable moods
+            fetch(apiUrl('/api/record_mood'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, mood: moodNumber, mood_label: numberToLabel(moodNumber), mood_emoji: numberToEmoji(moodNumber) })
+            })
+            .then(res => res.json())
+            .then(resp => {
+                if (!resp || resp.ok === false) {
+                    throw new Error(resp?.error || '提交失败');
+                }
+                // 更新侧边栏心情显示为 emoji + label
+                const label = numberToLabel(Number(moodNumber));
+                const emoji = numberToEmoji(Number(moodNumber));
+                document.getElementById('user-mood').textContent = emoji ? `${emoji} ${label}` : label;
+                // 更新本地日历当天心情
+                const now = new Date();
+                const key = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
+                calendarMoodData[key] = { emoji: numberToEmoji(Number(moodNumber)), label: numberToLabel(Number(moodNumber)) };
+                renderCalendar(new Date(now.getFullYear(), now.getMonth(), 1));
+                    // 更新本周展示与按钮状态
+                    fetchWeekMood();
+                    setTimeout(updateTodayStatus, 50);
+                // 重置选择
+                Array.from(moodEmojiList.children).forEach(i => i.classList.remove('selected'));
+                selectedMood = null;
+                moodSendBtn.disabled = true;
+                try { if (window.showSmallPopup) window.showSmallPopup('心情记录成功', { type: 'success', duration: 2500 }); else console.log('心情记录成功'); } catch(e){ console.log('心情记录成功'); }
+            })
+            .catch(() => { try { if (window.showSmallPopup) window.showSmallPopup('心情记录失败，请稍后重试', { type: 'error', duration: 3000 }); else console.log('心情记录失败，请稍后重试'); } catch(e) { console.log('心情记录失败，请稍后重试'); } });
+        };
+        // 聊天逻辑同 ai-chat.html，可直接复用
+        // 日历与本周心情逻辑
+        const calendarMonth = document.getElementById('calendar-month');
+        const calendarGrid = document.getElementById('calendar-grid');
+        const weekDays = document.getElementById('week-days');
+        let currentDate = new Date();
+
+        // 日历心情数据缓存
+        let calendarMoodData = {};
+        function renderCalendar(date) {
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            calendarMonth.textContent = `${year}年${month+1}月`;
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month+1, 0);
+            const startWeekDay = firstDay.getDay();
+            const daysInMonth = lastDay.getDate();
+            let html = '';
+            for(let i=0; i<startWeekDay; i++) html += '<div></div>';
+            for(let d=1; d<=daysInMonth; d++) {
+                const isToday = year === new Date().getFullYear() && month === new Date().getMonth() && d === new Date().getDate();
+                // 获取当天心情 emoji
+                const key = `${year}-${month+1}-${d}`;
+                let mood = calendarMoodData[key];
+                let moodHtml = '';
+                if (mood && mood.emoji) {
+                    moodHtml = `<div class=\"calendar-mood\">${mood.emoji}</div>`;
+                } else {
+                    moodHtml = `<div class=\"calendar-mood none\">未签到</div>`;
+                }
+                html += `<div class=\"calendar-cell${isToday ? ' today' : ''}\"><div class=\"calendar-date\">${d}</div>${moodHtml}</div>`;
+            }
+            calendarGrid.innerHTML = html;
+        }
+        // 获取整月心情数据并渲染日历（调用后端 /api/mood_month）
+        function fetchCalendarMood(year, month) {
+            if (!username) { renderCalendar(new Date(year, month, 1)); return; }
+                        fetch(apiUrl(`/api/mood_month?username=${encodeURIComponent(username)}&year=${year}&month=${month+1}`))
+              .then(r => r.json())
+              .then(resp => {
+                  const data = resp?.data || resp || {};
+                  const days = Array.isArray(data.days) ? data.days : [];
+                  calendarMoodData = {};
+                  days.forEach(d => {
+                      const key = `${year}-${month+1}-${d.day}`;
+                      calendarMoodData[key] = { emoji: numberToEmoji(Number(d.mood)) };
+                  });
+                  renderCalendar(new Date(year, month, 1));
+                  fetchWeekMood();
+                  // 更新今日按钮状态
+                  setTimeout(updateTodayStatus, 50);
+              })
+              .catch(() => {
+                  renderCalendar(new Date(year, month, 1));
+                  fetchWeekMood();
+                  setTimeout(updateTodayStatus, 50);
+              });
+        }
+        document.getElementById('prev-month').onclick = function() {
+            currentDate.setMonth(currentDate.getMonth()-1);
+            renderCalendar(currentDate);
+            fetchCalendarMood(currentDate.getFullYear(), currentDate.getMonth());
+            // 校验今日是否已记录，决定按钮可用性
+            function updateTodayStatus() {
+                const now = new Date();
+                const key = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
+                const statusDiv = document.getElementById('mood-status');
+                if (calendarMoodData[key] && calendarMoodData[key].emoji) {
+                    statusDiv.textContent = '今日已记录';
+                    moodSendBtn.disabled = true;
+                } else {
+                    statusDiv.textContent = '';
+                    moodSendBtn.disabled = (selectedMood === null);
+                }
+            }
+            setTimeout(updateTodayStatus, 400);
+        };
+        document.getElementById('next-month').onclick = function() {
+            currentDate.setMonth(currentDate.getMonth()+1);
+            renderCalendar(currentDate);
+            fetchCalendarMood(currentDate.getFullYear(), currentDate.getMonth());
+        };
+    renderCalendar(currentDate);
+    fetchCalendarMood(currentDate.getFullYear(), currentDate.getMonth());
+
+        // 先渲染周一到周日的方框
+        const weekDayNames = ['周一','周二','周三','周四','周五','周六','周日'];
+        function renderWeekBoxes() {
+            let html = '';
+            weekDayNames.forEach(day => {
+                html += `<div class=\"week-day\">
+                    <div class=\"week-mood-box\" id=\"mood-emoji-${day}\"></div>
+                    <span>${day}</span>
+                </div>`;
+            });
+            weekDays.innerHTML = html;
+        }
+        renderWeekBoxes();
+
+        // 获取数据后填入 emoji（将 calendarMoodData 转为本周展示）
+        function fetchWeekMood() {
+            try {
+                // 计算本周（以周一为起点）的日期列表
+                const today = new Date();
+                const day = today.getDay();
+                // JS: 0=周日, 1=周一 ... 6=周六
+                const offsetToMonday = (day === 0) ? -6 : (1 - day);
+                const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offsetToMonday);
+                for (let i = 0; i < 7; i++) {
+                    const dt = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+                    const key = `${dt.getFullYear()}-${dt.getMonth()+1}-${dt.getDate()}`;
+                    const elId = `mood-emoji-${weekDayNames[i]}`;
+                    const el = document.getElementById(elId);
+                    if (!el) continue;
+                    const mood = calendarMoodData[key];
+                    if (mood && mood.emoji) {
+                        el.textContent = mood.emoji;
+                    } else {
+                        el.textContent = '';
+                    }
+                }
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        // 更新今日状态（按钮启用/禁用与状态文字）
+        function updateTodayStatus() {
+            const now = new Date();
+            const key = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
+            const statusDiv = document.getElementById('mood-status');
+            if (calendarMoodData[key] && calendarMoodData[key].emoji) {
+                statusDiv.textContent = '今日已记录';
+                moodSendBtn.disabled = true;
+            } else {
+                statusDiv.textContent = '';
+                moodSendBtn.disabled = (selectedMood === null);
+            }
+        }
+    </script>
+    <script src="./tracker.js"></script>
+    <script src="./maint-popup.js"></script>
+
+</body>
+</html>

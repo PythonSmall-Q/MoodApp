@@ -1,0 +1,593 @@
+<!-- 留言板：情绪小助手 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情绪留言板 - 情绪小助手</title>
+  <script src="./api-config.js"></script>
+    <!-- 页面样式 -->
+    <link rel="stylesheet" href="./styles.css">
+    <style>
+        /* 页面基础样式 */
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            background: #f7f8fa;
+            display: flex;
+            min-height: 100vh;
+        }
+        /* 侧边栏样式 */
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(120deg, #e3f0ff 0%, #f7f8fa 100%);
+            box-shadow: 2px 0 16px rgba(58,122,254,0.10);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px 0 24px 0;
+        }
+        .avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3a7afe 60%, #e3f0ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.8rem;
+            color: #fff;
+            margin-bottom: 22px;
+            box-shadow: 0 2px 12px rgba(58,122,254,0.12);
+        }
+        .user-info {
+            text-align: center;
+            margin-bottom: 32px;
+            width: 85%;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(58,122,254,0.08);
+            padding: 18px 0 12px 0;
+        }
+        .user-info .name {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #3a7afe;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        .user-info .interest {
+            font-size: 1.05rem;
+            color: #4caf50;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .user-info .interest::before {
+            content: '🎯';
+            font-size: 1.1rem;
+        }
+        .user-info .mood {
+            font-size: 1.05rem;
+            color: #ff9800;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .user-info .mood::before {
+            content: '😊';
+            font-size: 1.1rem;
+        }
+        .sidebar-bottom {
+            margin-top: auto;
+            width: 100%;
+            text-align: center;
+        }
+        .anonymous-btn {
+            background: #fff;
+            color: #3a7afe;
+            border: 2px solid #3a7afe;
+            border-radius: 8px;
+            padding: 10px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .anonymous-btn:hover {
+            background: #3a7afe;
+            color: #fff;
+        }
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 0;
+            min-width: 0;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+        .mood-record-btn {
+            background: linear-gradient(90deg, #3a7afe 0%, #0056b3 100%);
+            color: #fff;
+            border: none;
+            border-radius: 24px;
+            padding: 12px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(58,122,254,0.12);
+            transition: background 0.2s;
+        }
+        .mood-record-btn:hover {
+            background: linear-gradient(90deg, #0056b3 0%, #3a7afe 100%);
+        }
+        .ai-chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(58,122,254,0.10);
+            padding: 24px 24px 0 24px;
+            margin: 0;
+            box-sizing: border-box;
+            max-width: none;
+        }
+        .ai-chat-title {
+            font-size: 1.2rem;
+            color: #3a7afe;
+            font-weight: 600;
+            margin-bottom: 18px;
+        }
+        .ai-chat-data {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 18px;
+        }
+        .ai-chat {
+            flex: 1;
+            min-height: 0;
+            max-height: none;
+            overflow-y: auto;
+            background: #f7f8fa;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 0;
+            font-size: 1rem;
+            color: #222;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chat-msg {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .chat-msg.user {
+            justify-content: flex-end;
+        }
+        .chat-msg.ai {
+            justify-content: flex-start;
+        }
+        .chat-bubble {
+            max-width: 70%;
+            padding: 8px 14px;
+            border-radius: 16px;
+            font-size: 1rem;
+            word-break: break-word;
+        }
+        .chat-bubble.user {
+            background: linear-gradient(90deg, #3a7afe 0%, #0056b3 100%);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-bubble.ai {
+            background: #e3f0ff;
+            color: #222;
+            border-bottom-left-radius: 4px;
+        }
+        .chat-input-row {
+            display: flex;
+            gap: 12px;
+            padding: 16px 0 18px 0;
+            border-top: 1px solid #e3f0ff;
+            background: #fff;
+            position: sticky;
+            bottom: 0;
+            z-index: 2;
+        }
+        .chat-input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #3a7afe;
+            font-size: 1rem;
+        }
+        .send-btn {
+            background: #3a7afe;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .send-btn:hover {
+            background: #0056b3;
+        }
+    </style>
+    <style>
+        .avatar-dropdown {
+            position: absolute;
+            left: 32px;
+            top: 110px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(58,122,254,0.12);
+            padding: 12px 0;
+            min-width: 140px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .avatar-dropdown button {
+            background: none;
+            border: none;
+            padding: 10px 24px;
+            font-size: 1rem;
+            color: #3a7afe;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .avatar-dropdown button:hover {
+            background: #e3f0ff;
+        }
+    </style>
+    <style>
+        .avatar-dropdown {
+            position: absolute;
+            left: 32px;
+            top: 110px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(58,122,254,0.12);
+            padding: 12px 0;
+            min-width: 140px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .avatar-dropdown button {
+            background: none;
+            border: none;
+            padding: 10px 24px;
+            font-size: 1rem;
+            color: #3a7afe;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .avatar-dropdown button:hover {
+            background: #e3f0ff;
+        }
+    </style>
+</head>
+<body>
+    <script src="./api-config.js"></script>
+    <script src="./auth-guard.js"></script>
+    <script src="./mood-map.js"></script>
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <!-- 用户头像 -->
+        <div class="avatar" id="user-avatar">😊</div>
+        <div class="avatar-dropdown" id="avatar-dropdown" style="display:none;">
+            <button onclick="logoutUser()">退出账户</button>
+            <button onclick="editUserSettings()">修改用户设置</button>
+        </div>
+        <!-- 用户信息区 -->
+        <div class="user-info">
+            <!-- 用户名显示 -->
+            <div class="name" id="user-name">用户名</div>
+            <!-- 兴趣爱好显示 -->
+            <div class="interest" id="user-interest">兴趣爱好</div>
+            <!-- 心情显示 -->
+            <div class="mood" id="user-mood">心情</div>
+        </div>
+        <!-- 心情记录按钮 -->
+    <button onclick="location.href='mood-record.html'" class="mood-record-btn btn" id="mood-record">心情记录</button>
+    <button onclick="location.href='ai-chat.html'" class="mood-record-btn btn" id="ai-chat">情绪小助手</button>
+    <button onclick="location.href='anonymous-chat.html'" class="mood-record-btn btn" id="anonymous-chat">匿名聊天</button>
+        <button onclick="location.href='health.html'" class="mood-record-btn btn" id="health">系统健康</button>
+        <div class="sidebar-bottom">
+            <button class="user-settings-btn" id="user-settings-btn" style="width:80%;margin-bottom:18px;position:relative;">用户设置</button>
+            <div class="user-settings-dropdown" id="user-settings-dropdown" style="display:none;">
+                <button onclick="editUserSettings()">修改用户设置</button>
+                <button onclick="logoutUser()">登出</button>
+            </div>
+        </div>
+    <style>
+        .user-settings-btn {
+            background: linear-gradient(90deg, #3a7afe 0%, #0056b3 100%);
+            color: #fff;
+            border: none;
+            border-radius: 24px;
+            padding: 12px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 8px rgba(58,122,254,0.12);
+            transition: background 0.2s;
+        }
+        .user-settings-btn:hover {
+            background: linear-gradient(90deg, #0056b3 0%, #3a7afe 100%);
+        }
+        .user-settings-dropdown {
+            position: absolute;
+            left: 32px;
+            bottom: 48px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(58,122,254,0.12);
+            padding: 12px 0;
+            min-width: 140px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .user-settings-dropdown button {
+            background: none;
+            border: none;
+            padding: 10px 24px;
+            font-size: 1rem;
+            color: #3a7afe;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .user-settings-dropdown button:hover {
+            background: #e3f0ff;
+        }
+    </style>
+    </div>
+    <!-- 主内容区 -->
+    <div class="main">
+        <div class="ai-chat-container">
+            <div class="ai-chat-title">情绪留言板</div>
+            <!-- 留言输入区 -->
+            <form id="msg-form" class="form-row" style="margin-bottom:18px;">
+                <input type="text" class="chat-input" id="nickname" placeholder="昵称（可匿名）" maxlength="16" style="max-width:220px;" />
+                <textarea class="chat-input" id="msg-content" placeholder="请输入留言内容..." rows="3" maxlength="200" style="resize:none;"></textarea>
+                <select class="chat-input" id="mood-select" style="max-width:220px;">
+                    <option value="">请选择心情</option>
+                    <option value="开心">😊 开心</option>
+                    <option value="难过">😢 难过</option>
+                    <option value="生气">😡 生气</option>
+                    <option value="平静">😐 平静</option>
+                    <option value="激动">🤩 激动</option>
+                    <option value="焦虑">😰 焦虑</option>
+                </select>
+                <button class="send-btn" id="msg-send-btn" type="submit" style="align-self:flex-start;">留言</button>
+            </form>
+            <!-- 留言列表 -->
+            <div id="msg-list" style="flex:1;overflow-y:auto;padding-bottom:18px;"></div>
+        </div>
+    </div>
+    <script src="./small-popup.js"></script>
+    <script src="./small-modal.js"></script>
+    <script>
+        
+        // 获取用户名（cookie 优先，回退 localStorage）
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+            return '';
+            }
+        function getUsername() {
+            const c = getCookie('username');
+            if (c) return c;
+            try { return localStorage.getItem('username') || ''; } catch { return ''; }
+        }
+        const username = getUsername();
+        if (!username) {
+            window.location.href = './login.html';
+        }
+        // 填充侧边栏用户信息
+        if (username) {
+            document.getElementById('user-name').textContent = username;
+            fetch(apiUrl(`/api/ai_chat_data?username=${encodeURIComponent(username)}`))
+                .then(r => r.json())
+                .then(resp => {
+                    const data = resp?.data || resp || {};
+                    document.getElementById('user-interest').textContent = data.interest || '兴趣爱好';
+                    const moodText = numberToLabel(data.present_mood) || data.present_mood || '心情';
+                    const moodEmoji = numberToEmoji(data.present_mood) || labelToEmoji(data.present_mood) || '';
+                    document.getElementById('user-mood').textContent = moodEmoji ? `${moodEmoji} ${moodText}` : moodText;
+                })
+                .catch(() => {});
+        }
+        // 获取留言列表
+    const API_BASE = (typeof window !== 'undefined' && window.FEELINGS_API_BASE) ? window.FEELINGS_API_BASE : '';
+        let bbsOffset = 0;
+        const BBS_PAGE = 20;
+        let lastSeenId = 0;
+
+        function fetchMessages(reset = true) {
+            const url = apiUrl(`/api/bbs?limit=${BBS_PAGE}&offset=${bbsOffset}`);
+            fetch(url)
+                .then(res => res.json())
+                .then(resp => {
+                    const data = Array.isArray(resp?.data?.messages)
+                        ? resp.data.messages
+                        : (Array.isArray(resp?.messages) ? resp.messages : []);
+                    if (reset) {
+                        document.getElementById('msg-list').innerHTML = '';
+                        bbsOffset = 0;
+                    }
+                    renderMessages(data, !reset);
+                    if (data.length > 0) {
+                        const maxId = Math.max(...data.map(m => m.id || 0));
+                        if (maxId > lastSeenId) lastSeenId = maxId;
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('msg-list').innerHTML = '<div style="color:#999;text-align:center;margin-top:32px;">无法获取留言，请稍后重试</div>';
+                });
+        }
+
+        // 渲染留言列表
+        function renderMessages(msgs, append = false) {
+            const list = document.getElementById('msg-list');
+            if (!Array.isArray(msgs) || msgs.length === 0) {
+                if (!append) list.innerHTML = '<div style="color:#999;text-align:center;margin-top:32px;">暂无留言，快来发表你的心情吧！</div>';
+                return;
+            }
+                        const html = msgs.map(msg => `
+                                <div class="card" style="background:#e3f0ff;border-radius:12px;padding:12px 16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(58,122,254,0.08);">
+                                        <div style="font-weight:600;color:#3a7afe;">${msg.nickname ? msg.nickname : '匿名'} <span style="font-size:1.1rem;">${msg.mood ? moodEmoji(msg.mood) : ''}</span></div>
+                                        <div style="margin:8px 0;color:#222;">${escapeHtml(msg.content)}</div>
+                                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                                            <div style="font-size:0.95rem;color:#888;">${msg.time ? msg.time : ''}</div>
+                                            <div><button data-id="${msg.id || ''}" class="report-msg-btn btn" style="background:none;border:1px solid #e53935;color:#e53935;padding:6px 10px;border-radius:8px;cursor:pointer;">举报</button></div>
+                                        </div>
+                                </div>
+                        `).join('');
+            if (append) list.insertAdjacentHTML('beforeend', html); else list.innerHTML = html;
+            // attach report handlers
+            document.querySelectorAll('.report-msg-btn').forEach(b=>{
+                b.addEventListener('click', async ()=>{
+                    const id = b.getAttribute('data-id');
+                    let reason = '';
+                    try {
+                        const r = await showModalPrompt('请输入举报理由（可选）', '');
+                        if (r === null) return; // cancelled
+                        if (typeof r !== 'undefined') reason = r;
+                    } catch (e) {
+                        // ignore and continue with empty reason
+                    }
+                    fetch(apiUrl('/api/report'), { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ reporter: '', target_room_id: null, target_username: null, reason, details: JSON.stringify({ bbs_id: id }) }) });
+                    try { if (window.showSmallPopup) window.showSmallPopup('已提交举报，管理员将审查', { type: 'success', duration: 2500 }); else console.log('已提交举报，管理员将审查'); } catch(e) { console.log('已提交举报，管理员将审查'); }
+                });
+            });
+        }
+
+        // Load more button
+        function loadMoreBbs() {
+            bbsOffset += BBS_PAGE;
+            fetchMessages(false);
+        }
+
+        // Subscribe long-poll for new messages
+        let bbsSubscribeRunning = false;
+        async function bbsSubscribeLoop() {
+            if (bbsSubscribeRunning) return;
+            bbsSubscribeRunning = true;
+            try {
+                while (true) {
+                    const res = await fetch(apiUrl(`/api/bbs/subscribe?last_id=${lastSeenId}`));
+                    const j = await res.json().catch(()=>({}));
+                    const msgs = Array.isArray(j?.data?.messages) ? j.data.messages : (Array.isArray(j?.messages) ? j.messages : []);
+                    if (msgs && msgs.length) {
+                        renderMessages(msgs, true);
+                        const maxId = Math.max(...msgs.map(m=>m.id||0));
+                        if (maxId > lastSeenId) lastSeenId = maxId;
+                    }
+                }
+            } catch (e) {
+                // retry after a short backoff
+                await new Promise(r=>setTimeout(r, 1500));
+                bbsSubscribeRunning = false;
+                bbsSubscribeLoop();
+            }
+        }
+
+        // 心情 emoji：优先使用共享的映射函数（numberToEmoji / labelToEmoji），回退到简单映射
+        function moodEmoji(mood) {
+            try {
+                if (window.numberToEmoji) {
+                    const e = numberToEmoji(mood);
+                    if (e) return e;
+                }
+                if (window.labelToEmoji) {
+                    const e2 = labelToEmoji(mood);
+                    if (e2) return e2;
+                }
+            } catch (_) {}
+            switch(mood) {
+                case '开心': return '😊';
+                case '难过': return '😢';
+                case '生气': return '😡';
+                case '平静': return '😐';
+                case '激动': return '🤩';
+                case '焦虑': return '😰';
+                default: return '';
+            }
+        }
+
+        // 防止XSS
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, function(s) {
+                return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'})[s];
+            });
+        }
+
+        // 提交留言
+        document.getElementById('msg-form').onsubmit = function(e) {
+            e.preventDefault();
+            const nickname = document.getElementById('nickname').value.trim();
+            const content = document.getElementById('msg-content').value.trim();
+            const mood = document.getElementById('mood-select').value;
+            if (!content) {
+                try { if (window.showSmallPopup) window.showSmallPopup('请输入留言内容', { type: 'error', duration: 3000 }); else console.log('请输入留言内容'); } catch(e) { console.log('请输入留言内容'); }
+                return;
+            }
+            if (!mood) {
+                try { if (window.showSmallPopup) window.showSmallPopup('请选择心情', { type: 'error', duration: 3000 }); else console.log('请选择心情'); } catch(e) { console.log('请选择心情'); }
+                return;
+            }
+            document.getElementById('msg-send-btn').disabled = true;
+            fetch(apiUrl('/api/bbs'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nickname, content, mood })
+            })
+            .then(res => res.json())
+            .then(resp => {
+                document.getElementById('msg-send-btn').disabled = false;
+                document.getElementById('msg-content').value = '';
+                fetchMessages();
+            })
+            .catch(() => {
+                document.getElementById('msg-send-btn').disabled = false;
+                try { if (window.showSmallPopup) window.showSmallPopup('留言失败，请稍后重试', { type: 'error', duration: 3000 }); else console.log('留言失败，请稍后重试'); } catch(e) { console.log('留言失败，请稍后重试'); }
+            });
+        };
+
+    // 页面加载时获取留言
+    fetchMessages();
+    // add load more control
+    const moreBtn = document.createElement('button'); moreBtn.textContent = '加载更多'; moreBtn.onclick = loadMoreBbs; moreBtn.style.margin='12px'; document.querySelector('.ai-chat-container').appendChild(moreBtn);
+    bbsSubscribeLoop().catch(()=>{});
+    </script>
+    <script src="./tracker.js"></script>
+    <script src="./maint-popup.js"></script>
+</body>
+</html>

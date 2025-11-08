@@ -1,0 +1,329 @@
+<!-- 主页：情绪小助手 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>情绪小助手</title>
+  <script src="./api-config.js"></script>
+	<!-- 页面样式 -->
+	<link rel="stylesheet" href="./styles.css">
+	<style>
+		/* 页面基础样式 */
+		body {
+			margin: 0;
+			font-family: 'Segoe UI', 'Arial', sans-serif;
+			background: #f7f8fa;
+		}
+		/* 顶部导航栏样式 */
+		.header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 24px 48px 16px 48px;
+			background: #fff;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+		}
+		/* 网站标题样式 */
+		.site-title {
+			font-size: 2.2rem;
+			font-weight: 700;
+			color: #3a7afe;
+			letter-spacing: 2px;
+		}
+		/* 登录/注册链接样式 */
+		.auth-links {
+			font-size: 1rem;
+		}
+		.auth-links a {
+			color: #3a7afe;
+			text-decoration: none;
+			margin-left: 24px;
+			font-weight: 500;
+			transition: color 0.2s;
+		}
+		.auth-links a:hover {
+			color: #0056b3;
+		}
+	</style>
+</head>
+<body>
+	<script src="./api-config.js"></script>
+	<script src="./auth-guard.js"></script>
+	<!-- 顶部导航栏 -->
+	<div class="header">
+		<div class="site-title" id="site-title">情绪小助手</div>
+		<div class="auth-links">
+			<a href="./login.html">登录</a>
+			<a href="./register.html">注册</a>
+		</div>
+	</div>
+	<!-- 英雄区：欢迎语和互动 -->
+	<section class="hero">
+		<div class="hero-content">
+			<!-- 每日一句卡片 -->
+			<div class="daily-quote-card" id="daily-quote-card">
+				<span id="daily-quote">“保持微笑，世界会更美好！”</span>
+			</div>
+			<!-- 欢迎标题 -->
+			<h1 class="animated-title">欢迎来到情绪小助手</h1>
+			<p>用科技守护你的情绪健康，发现更美好的自己。</p>
+			<!-- 心情选择器 -->
+			<div class="mood-selector">
+				<div id="confetti-container"></div>
+				<span>选择你的当前心情：</span>
+				<button class="mood-btn" data-mood="开心">😊 开心</button>
+				<button class="mood-btn" data-mood="难过">😢 难过</button>
+				<button class="mood-btn" data-mood="生气">😡 生气</button>
+				<button class="mood-btn" data-mood="平静">😌 平静</button>
+			</div>
+			<!-- 心情提示信息 -->
+			<div id="mood-message" class="mood-message"></div>
+			<a class="cta-btn" href="./login.html">立即体验</a>
+		</div>
+	</section>
+	<!-- 功能区 -->
+	<section class="features">
+		<h2>核心功能</h2>
+		<div class="features-list">
+			<!-- 聊天室功能 -->
+			<div class="feature-item">
+				<h3>同心聊天室</h3>
+				<p>与拥有相同心情的人在线交流，分享感受，获得支持。</p>
+			</div>
+			<!-- 情绪日记功能 -->
+			<div class="feature-item">
+				<h3>情绪日记</h3>
+				<p>记录每日心情，回顾成长与变化。</p>
+			</div>
+			<!-- 心理建议功能 -->
+			<div class="feature-item">
+				<h3>心理建议</h3>
+				<p>个性化推荐心理调节方法，助你轻松应对压力。</p>
+			</div>
+		</div>
+	</section>
+	<!-- 页脚 -->
+	<footer class="footer">
+		<p>© 2025 情绪小助手 | 关注心理健康，关爱每一个你</p>
+	</footer>
+	/* 下面是动画和响应式等附加样式 */
+	<style>
+		body {
+			background: linear-gradient(120deg, #e3f0ff 0%, #f7f8fa 100%);
+			min-height: 100vh;
+		}
+		.header {
+			position: sticky;
+			top: 0;
+			z-index: 10;
+		}
+		.site-title {
+			font-family: 'Segoe UI', 'Arial', sans-serif;
+		}
+		.animated-title {
+			animation: floatTitle 2.5s ease-in-out infinite alternate;
+		}
+		@keyframes floatTitle {
+			0% { transform: translateY(0); }
+			100% { transform: translateY(-12px); }
+		}
+		.hero {
+			background: transparent;
+			padding: 64px 0 48px 0;
+			text-align: center;
+		}
+		.hero-content {
+			position: relative;
+			z-index: 2;
+		}
+		.hero-content p {
+			font-size: 1.2rem;
+			color: #333;
+			margin-bottom: 32px;
+		}
+		.mood-selector {
+			margin-bottom: 24px;
+			font-size: 1.1rem;
+		}
+		.mood-btn {
+			background: #fff;
+			border: 2px solid #3a7afe;
+			color: #3a7afe;
+			border-radius: 24px;
+			padding: 8px 20px;
+			margin: 0 8px;
+			font-size: 1rem;
+			cursor: pointer;
+			font-weight: 500;
+			box-shadow: 0 2px 8px rgba(58,122,254,0.08);
+			transition: background 0.2s, color 0.2s, border 0.2s;
+		}
+		.mood-btn:hover, .mood-btn.selected {
+			background: #3a7afe;
+			color: #fff;
+			border-color: #0056b3;
+		}
+		.mood-message {
+			font-size: 1.1rem;
+			color: #3a7afe;
+			margin-bottom: 24px;
+			min-height: 24px;
+			transition: opacity 0.3s;
+		}
+		.cta-btn {
+			display: inline-block;
+			padding: 12px 32px;
+			background: linear-gradient(90deg, #3a7afe 0%, #0056b3 100%);
+			color: #fff;
+			border-radius: 24px;
+			font-size: 1.1rem;
+			text-decoration: none;
+			font-weight: 600;
+			box-shadow: 0 2px 8px rgba(58,122,254,0.12);
+			transition: background 0.2s, transform 0.2s;
+		}
+		.cta-btn:hover {
+			background: linear-gradient(90deg, #0056b3 0%, #3a7afe 100%);
+			transform: scale(1.05);
+		}
+		.features {
+			background: #fff;
+			padding: 48px 0;
+			text-align: center;
+			box-shadow: 0 4px 24px rgba(58,122,254,0.06);
+			border-radius: 32px;
+			margin: 32px 24px;
+		}
+		.features h2 {
+			font-size: 2rem;
+			color: #3a7afe;
+			margin-bottom: 32px;
+		}
+		.features-list {
+			display: flex;
+			justify-content: center;
+			gap: 48px;
+			flex-wrap: wrap;
+		}
+		.feature-item {
+			background: #f7f8fa;
+			border-radius: 16px;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+			padding: 32px 24px;
+			width: 260px;
+			margin-bottom: 24px;
+			transition: transform 0.2s, box-shadow 0.2s;
+		}
+		.feature-item:hover {
+			transform: translateY(-8px) scale(1.04);
+			box-shadow: 0 8px 24px rgba(58,122,254,0.12);
+		}
+		.feature-item h3 {
+			color: #3a7afe;
+			font-size: 1.3rem;
+			margin-bottom: 12px;
+		}
+		.feature-item p {
+			color: #333;
+			font-size: 1rem;
+		}
+		.footer {
+			background: linear-gradient(90deg, #3a7afe 0%, #0056b3 100%);
+			color: #fff;
+			text-align: center;
+			padding: 24px 0;
+			font-size: 1rem;
+			margin-top: 48px;
+			border-radius: 0 0 32px 32px;
+		}
+		@media (max-width: 900px) {
+			.features-list {
+				flex-direction: column;
+				gap: 24px;
+				align-items: center;
+			}
+			.features {
+				margin: 24px 8px;
+			}
+		}
+	</style>
+	<script>
+		// 心情选择器交互和彩带动画
+		const moodBtns = document.querySelectorAll('.mood-btn'); // 所有心情按钮
+		const moodMsg = document.getElementById('mood-message'); // 心情提示信息
+		const confettiContainer = document.getElementById('confetti-container'); // 彩带容器
+		// 心情对应的提示语
+		const moodMessages = {
+			'开心': '和更多开心的小伙伴一起分享快乐吧！',
+			'难过': '你并不孤单，来聊聊你的心情，获得温暖支持。',
+			'生气': '释放情绪，和同样感受的小伙伴一起交流。',
+			'平静': '享受平静时光，和志同道合的人一起放松。'
+		};
+		// 心情对应的彩带表情
+		const confettiEmojis = {
+			'开心': ['😊','🎉','😄','🥳'],
+			'难过': ['😢','💧','🤗','🌧️'],
+			'生气': ['😡','🔥','💢','😤'],
+			'平静': ['😌','🌿','🧘','☁️']
+		};
+		// 显示彩带动画
+		function showConfetti(mood) {
+			const emojis = confettiEmojis[mood] || ['🎈'];
+			for (let i = 0; i < 12; i++) {
+				const emoji = emojis[Math.floor(Math.random()*emojis.length)];
+				const el = document.createElement('span');
+				el.className = 'confetti-emoji';
+				el.textContent = emoji;
+				el.style.left = (Math.random()*80+10) + 'vw';
+				el.style.top = '10vh';
+				el.style.zIndex = 1000;
+				document.body.appendChild(el);
+				setTimeout(() => el.remove(), 1200);
+			}
+		}
+		// 心情按钮点击事件
+		moodBtns.forEach(btn => {
+			btn.addEventListener('click', () => {
+				moodBtns.forEach(b => b.classList.remove('selected'));
+				btn.classList.add('selected');
+				const mood = btn.getAttribute('data-mood');
+				moodMsg.style.opacity = 0;
+				setTimeout(() => {
+					moodMsg.textContent = moodMessages[mood] || '';
+					moodMsg.style.opacity = 1;
+				}, 200);
+				showConfetti(mood);
+			});
+		});
+
+		// 每日一句相关交互
+		const quotes = [
+			'“保持微笑，世界会更美好！”',
+			'“每一天都是新的开始。”',
+			'“相信自己，你很棒！”',
+			'“困难只是成长的垫脚石。”',
+			'“和朋友聊聊，心情会更好。”',
+			'“勇敢表达你的感受。”',
+			'“你并不孤单。”',
+			'“快乐其实很简单。”',
+			'“用心感受生活的美好。”',
+			'“遇到问题，别忘了寻求帮助。”'
+		];
+		const dailyQuote = document.getElementById('daily-quote'); // 每日一句文本
+		// 随机切换每日一句
+		function setRandomQuote() {
+			let newQuote;
+			do {
+				newQuote = quotes[Math.floor(Math.random()*quotes.length)];
+			} while (dailyQuote.textContent === newQuote);
+			dailyQuote.textContent = newQuote;
+		}
+		// 每6秒自动切换每日一句
+		setInterval(setRandomQuote, 6000);
+
+	</script>
+	<script src="./tracker.js"></script>
+    <script src="./maint-popup.js"></script>
+</body>
+</html>

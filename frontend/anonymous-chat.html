@@ -1,0 +1,1091 @@
+<!-- 匿名聊天页面 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>匿名聊天</title>
+  <script src="./api-config.js"></script>
+    <link rel="stylesheet" href="./styles.css">
+    <style>
+        html, body { height:100%; }
+        body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background:#f7f8fa; color:#222; overflow:hidden; }
+        .sidebar { width:260px; height:100vh; position:fixed; left:0; top:0; background:#fff; box-shadow: 0 2px 12px rgba(58,122,254,0.08); display:flex; flex-direction:column; align-items:center; padding-top:24px; }
+        .avatar { width: 88px; height: 88px; background: linear-gradient(135deg,#3a7afe 0%,#6fb1ff 100%); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size: 2.8rem; font-family: "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji","Segoe UI Symbol","Segoe UI",Arial,sans-serif; color: #fff; margin-bottom: 22px; box-shadow: 0 2px 12px rgba(58,122,254,0.12); }
+        .user-info {
+            text-align: center;
+            margin-bottom: 32px;
+            width: 85%;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(58,122,254,0.08);
+            padding: 18px 0 12px 0;
+        }
+        .user-info .name {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #3a7afe;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        .user-info .interest {
+            font-size: 1.05rem;
+            color: #4caf50;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .user-info .interest::before {
+            content: '🎯';
+            font-size: 1.1rem;
+        }
+        .user-info .mood {
+            font-size: 1.05rem;
+            color: #ff9800;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .user-info .mood::before {
+            content: '😊';
+            font-size: 1.1rem;
+        }
+        .sidebar-bottom {
+            margin-top: auto;
+            width: 100%;
+            text-align: center;
+        }
+        .mood-record-btn {
+            background: linear-gradient(90deg, #3a7afe 0%, #0056b3 100%);
+            color: #fff;
+            border: none;
+            border-radius: 24px;
+            padding: 12px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(58,122,254,0.12);
+            transition: background 0.2s;
+        }
+        .mood-record-btn:hover {
+            background: linear-gradient(90deg, #0056b3 0%, #3a7afe 100%);
+        }
+        /* 主内容区布局 */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 0;
+            min-width: 0;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+        .chat-header {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 2px 8px rgba(58,122,254,0.08);
+            padding: 18px 24px;
+            margin: 24px 24px 0 24px;
+        }
+        .chat-header .avatar {
+            width: 60px;
+            height: 60px;
+            font-size: 2rem;
+            margin-bottom: 0;
+            box-shadow: none;
+        }
+        .chat-header-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .chat-header-info .name {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #3a7afe;
+        }
+        .chat-header-info .interest {
+            font-size: 1rem;
+            color: #4caf50;
+        }
+        .chat-header-info .mood {
+            font-size: 1rem;
+            color: #ff9800;
+        }
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(58,122,254,0.10);
+            margin: 18px 24px 0 24px;
+            padding: 24px 24px 0 24px;
+            min-width: 0;
+        }
+        .ai-chat {
+            flex: 1;
+            min-height: 0;
+            max-height: none;
+            overflow-y: auto;
+            background: #f7f8fa;
+            border-radius: 12px;
+            padding: 12px;
+            /* 留出底部空白，避免被 sticky 输入栏遮挡最后一条消息 */
+            padding-bottom: 96px;
+            margin-bottom: 0;
+            font-size: 1rem;
+            color: #222;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chat-msg {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .chat-msg.user {
+            justify-content: flex-end;
+        }
+        .chat-msg.other {
+            justify-content: flex-start;
+        }
+        .chat-bubble {
+            max-width: 70%;
+            padding: 8px 14px;
+            border-radius: 16px;
+            font-size: 1rem;
+            word-break: break-word;
+        }
+        .chat-bubble.user {
+            background: linear-gradient(90deg, #3a7afe 0%, #0056b3 100%);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-bubble.other {
+            background: #e3f0ff;
+            color: #222;
+            border-bottom-left-radius: 4px;
+        }
+        .chat-input-row {
+            display: flex;
+            gap: 12px;
+            padding: 16px 0 18px 0;
+            border-top: 1px solid #e3f0ff;
+            background: #fff;
+            position: sticky;
+            bottom: 0;
+            z-index: 2;
+        }
+        .chat-input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #3a7afe;
+            font-size: 1rem;
+        }
+        .send-btn {
+            background: #3a7afe;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .send-btn:hover {
+            background: #0056b3;
+        }
+        .end-btn {
+            background: #e53935;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .end-btn:hover {
+            background: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <script src="./api-config.js"></script>
+    <script>
+        // Ensure `apiUrl` is available even if `api-config.js` failed to load
+        if (typeof window.apiUrl !== 'function') {
+            try {
+                window.apiUrl = function(path) {
+                    try { if (window.FEELINGS_API_BASE) return String(window.FEELINGS_API_BASE).replace(/\/$/, '') + path; } catch (e) {}
+                    try { if (window.API_BASE) return String(window.API_BASE).replace(/\/$/, '') + path; } catch (e) {}
+                    return path;
+                };
+            } catch (e) { /* noop */ }
+        }
+    </script>
+    <script src="./auth-guard.js"></script>
+    <!-- shared mood helpers (numberToLabel, numberToEmoji, etc.) -->
+    <script src="./mood-map.js"></script>
+    <script src="./small-popup.js"></script>
+    <script src="./small-modal.js"></script>
+    <script src="./crypto-client.js"></script>
+    <script>
+        // Diagnostic: catch unhandled promise rejections and optionally suppress
+        // the noisy Chrome extension message that appears after long idle:
+        // "A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received"
+        window.addEventListener('unhandledrejection', function (e) {
+            try {
+                const reason = e && e.reason;
+                const msg = (typeof reason === 'string') ? reason : (reason && reason.message) || String(reason || '');
+                // If this is the known extension async-response message, prevent default so it doesn't show as uncaught
+                if (msg && msg.includes('A listener indicated an asynchronous response by returning true')) {
+                    console.warn('Suppressed extension async-response message:', msg);
+                    // prevent the browser from logging the uncaught rejection
+                    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+                    return;
+                }
+                // Otherwise log details for diagnosis
+                console.error('Unhandled promise rejection captured:', reason);
+            } catch (err) {
+                console.error('Error in unhandledrejection handler', err);
+            }
+        });
+
+        // Log window messages to help diagnose cross-context messaging issues
+        window.addEventListener('message', function (ev) {
+            try { console.debug('[diagnose] window.message', ev && ev.data); } catch (e) {}
+        });
+    </script>
+    <div class="sidebar">
+        <div class="avatar" id="user-avatar">😊</div>
+        <div class="user-info">
+            <div class="name" id="user-name">用户名</div>
+            <div class="interest" id="user-interest">兴趣爱好</div>
+            <div class="mood" id="user-mood">心情</div>
+        </div>
+        <a href="mood-record.html" class="link-block">
+            <button class="mood-record-btn btn">心情记录</button>
+        </a>
+        <a href="ai-chat.html" class="link-block">
+            <button class="mood-record-btn btn">情绪小助手</button>
+        </a>
+        <a href="bbs.html" class="link-block">
+            <button class="mood-record-btn btn">情绪留言板</button>
+        </a>
+        <a href="health.html" class="link-block">
+            <button class="mood-record-btn btn">系统健康</button>
+        </a>
+        <div class="sidebar-bottom">
+            <button class="user-settings-btn btn" id="user-settings-btn">用户设置</button>
+            <div class="user-settings-dropdown" id="user-settings-dropdown" style="display:none;">
+                <button onclick="editUserSettings()">修改用户设置</button>
+                <button onclick="logoutUser()">登出</button>
+            </div>
+    <style>
+        .user-settings-btn {
+            background: linear-gradient(90deg, #3a7afe 0%, #0056b3 100%);
+            color: #fff;
+            border: none;
+            border-radius: 24px;
+            padding: 12px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 8px rgba(58,122,254,0.12);
+            transition: background 0.2s;
+        }
+        .user-settings-btn:hover {
+            background: linear-gradient(90deg, #0056b3 0%, #3a7afe 100%);
+        }
+        .user-settings-dropdown {
+            position: absolute;
+            left: 32px;
+            bottom: 48px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(58,122,254,0.12);
+            padding: 12px 0;
+            min-width: 140px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .user-settings-dropdown button {
+            background: none;
+            border: none;
+            padding: 10px 24px;
+            font-size: 1rem;
+            color: #3a7afe;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .user-settings-dropdown button:hover {
+            background: #e3f0ff;
+        }
+    </style>
+        </div>
+    </div>
+    <div class="main">
+        <div id="search-popup" class="search-popup" style="display:flex;">
+            <div id="network-error-panel" style="display:none;">
+                <div style="font-size:1.3rem;color:#f44336;margin-bottom:18px;">网络错误，请检查网络连接</div>
+                <button class="refresh-btn" onclick="location.reload()">刷新</button>
+            </div>
+            <div id="searching-panel" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                <div style="font-size:1.3rem;color:#3a7afe;margin-bottom:18px;">搜索聊天对象中...</div>
+                <div class="searching-animation">
+                    <div class="search-spinner"></div>
+                </div>
+            </div>
+            <div id="search-fail-panel" style="display:none;">
+                <div style="font-size:1.3rem;color:#ff9800;margin-bottom:18px;">未找到聊天对象，请稍后再试</div>
+                <button class="refresh-btn" onclick="location.reload()">刷新</button>
+    <style>
+        .refresh-btn {
+            margin-top: 18px;
+            padding: 10px 32px;
+            font-size: 1.05rem;
+            background: linear-gradient(90deg, #3a7afe 0%, #0056b3 100%);
+            color: #fff;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(58,122,254,0.12);
+            transition: background 0.2s;
+        }
+        .refresh-btn:hover {
+            background: linear-gradient(90deg, #0056b3 0%, #3a7afe 100%);
+        }
+    </style>
+            </div>
+        </div>
+        <div id="chat-panel" style="display:none;">
+            <div class="chat-header">
+                <div class="avatar" id="other-avatar">😶</div>
+                <div class="chat-header-info">
+                    <div class="name" id="other-name">对方昵称</div>
+                    <div class="interest" id="other-interest">对方兴趣</div>
+                    <div class="mood" id="other-mood">对方心情</div>
+                </div>
+            </div>
+            <div class="chat-container">
+                <div class="ai-chat" id="ai-chat"></div>
+                <div class="chat-input-row">
+                    <input type="text" class="chat-input" id="chat-input" placeholder="和Ta说点什么..." />
+                    <button class="send-btn" id="send-btn">发送</button>
+                    <button class="end-btn" id="end-chat-btn" title="结束本次聊天">结束聊天</button>
+                    <button class="end-btn" id="report-btn" title="举报对方">举报</button>
+                </div>
+            </div>
+        </div>
+
+    <style>
+        .search-popup {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            width: calc(100vw - 260px); /* 不遮挡左侧260px侧边栏 */
+            z-index: 9999;
+            background: rgba(247,248,250,0.92);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .search-popup > div {
+            min-width: 320px;
+            min-height: 180px;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(58,122,254,0.10);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 24px;
+        }
+    </style>
+        
+    </div>
+    <script>
+        // 使用共享的 mood-map.js 提供的映射函数（numberToLabel, numberToEmoji 等）
+        // 用户设置下拉栏逻辑
+        const userSettingsBtn = document.getElementById('user-settings-btn');
+        const userSettingsDropdown = document.getElementById('user-settings-dropdown');
+        userSettingsBtn.onclick = function(e) {
+            e.stopPropagation();
+            userSettingsDropdown.style.display = userSettingsDropdown.style.display === 'block' ? 'none' : 'block';
+        };
+        document.body.addEventListener('click', function() {
+            userSettingsDropdown.style.display = 'none';
+        });
+        // 退出账户
+        function logoutUser() {
+            document.cookie = 'username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            try { localStorage.removeItem('username'); } catch {}
+            window.location.href = './login.html';
+        }
+        // 修改用户设置（跳转或弹窗）
+        function editUserSettings() {
+            window.location.href = './user-settings.html';
+        }
+        // 获取用户名（cookie 优先，回退 localStorage）
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+            return '';
+        }
+        function getUsername(){
+            const c = getCookie('username');
+            if (c) return c;
+            try { return localStorage.getItem('username') || ''; } catch { return ''; }
+        }
+        const username = getUsername();
+        if (!username) {
+            window.location.href = './login.html';
+        }
+            if (username) {
+            const nameEl = document.getElementById('user-name');
+            if (nameEl) nameEl.textContent = username;
+            // 可选：填充兴趣/心情
+              fetch(apiUrl(`/api/ai_chat_data?username=${encodeURIComponent(username)}`))
+              .then(r=>r.json()).then(resp=>{
+                const data = resp?.data || resp || {};
+                const interestEl = document.getElementById('user-interest');
+                                const moodEl = document.getElementById('user-mood');
+                                if (interestEl) interestEl.textContent = data.interest || '兴趣爱好';
+                                // Use shared mapping helpers so numeric moods are displayed as labels+emoji like other pages
+                                const moodText = (window.numberToLabel && numberToLabel(data.present_mood)) || data.present_mood || '心情';
+                                const moodEmoji = (window.numberToEmoji && numberToEmoji(data.present_mood)) || (window.labelToEmoji && labelToEmoji(data.present_mood)) || '';
+                                if (moodEl) moodEl.textContent = moodEmoji ? `${moodEmoji} ${moodText}` : moodText;
+              }).catch(()=>{});
+        }
+        // Prepare client crypto keypair (non-blocking). cryptoClient stores PEMs in localStorage.
+        // Try to read any existing stored public key synchronously so early fetches include it.
+        // Also call ensureKeyPair() asynchronously to generate keys if missing.
+        let clientPubPem = null;
+        try {
+            if (window.cryptoClient && typeof window.cryptoClient.getPublicPem === 'function') {
+                try { clientPubPem = window.cryptoClient.getPublicPem(); } catch (e) { clientPubPem = null; }
+            }
+            if (window.cryptoClient && typeof window.cryptoClient.ensureKeyPair === 'function') {
+                window.cryptoClient.ensureKeyPair().then(k => {
+                    try { clientPubPem = (k && k.pubPem) || window.cryptoClient.getPublicPem(); } catch (e) {}
+                }).catch(()=>{});
+            }
+        } catch (e) {}
+        // 搜索聊天对象
+        function showPanel(panelId) {
+            document.getElementById('searching-panel').style.display = 'none';
+            document.getElementById('search-fail-panel').style.display = 'none';
+            document.getElementById('network-error-panel').style.display = 'none';
+            document.getElementById('chat-panel').style.display = 'none';
+            document.getElementById('search-popup').style.display = 'flex';
+            if (panelId === 'chat-panel') {
+                document.getElementById('search-popup').style.display = 'none';
+                document.getElementById('chat-panel').style.display = 'flex';
+            } else {
+                document.getElementById(panelId).style.display = 'flex';
+            }
+        }
+        // 默认显示搜索动画并开始轮询匹配
+        showPanel('searching-panel');
+        let found = false;
+        let roomId = '';
+        let otherUser = '';
+        let matchTimer = null;
+    let heartbeatTimer = null;
+    let messagesTimer = null;
+        const retryIntervalMs = 5000; // 每5秒重试一次
+
+        function clearAllTimers() {
+            if (matchTimer) { clearInterval(matchTimer); matchTimer = null; }
+            if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
+            if (messagesTimer) { clearInterval(messagesTimer); messagesTimer = null; }
+        }
+
+        function handleChatClosed(reason) {
+            clearAllTimers();
+            // 禁用输入
+            const inputElem = document.getElementById('chat-input');
+            const sendBtn = document.getElementById('send-btn');
+            if (inputElem) inputElem.disabled = true;
+            if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = '已结束'; }
+            // 简单提示
+            const tip = document.createElement('div');
+            tip.style.position = 'fixed';
+            tip.style.left = '0';
+            tip.style.top = '0';
+            tip.style.width = '100vw';
+            tip.style.height = '100vh';
+            tip.style.background = 'rgba(0,0,0,0.18)';
+            tip.style.zIndex = '9999';
+            tip.style.display = 'flex';
+            tip.style.alignItems = 'center';
+            tip.style.justifyContent = 'center';
+            tip.innerHTML = `
+                <div style="background:#fff;border-radius:16px;box-shadow:0 2px 16px rgba(58,122,254,0.12);padding:28px 32px;display:flex;flex-direction:column;align-items:center;gap:14px;">
+                    <div style="font-size:1.15rem;color:#3a7afe;">聊天已结束${reason==='peer_timeout' ? '（对方已离开）' : ''}</div>
+                    <div style="display:flex;gap:12px;">
+                        <button id="restart-search" style="background:linear-gradient(90deg,#3a7afe 0%,#0056b3 100%);color:#fff;border:none;border-radius:24px;padding:10px 28px;font-size:1rem;font-weight:600;cursor:pointer;">重新寻找对象</button>
+                        <button id="close-tip" style="background:#e3f0ff;color:#3a7afe;border:none;border-radius:24px;padding:10px 28px;font-size:1rem;font-weight:600;cursor:pointer;">关闭</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(tip);
+            document.getElementById('restart-search').onclick = function() {
+                tip.remove();
+                // 重置状态并回到搜索
+                found = false;
+                roomId = '';
+                otherUser = '';
+                if (inputElem) inputElem.disabled = false;
+                if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = '发送'; }
+                showPanel('searching-panel');
+                startPolling();
+            };
+            document.getElementById('close-tip').onclick = function() { tip.remove(); };
+        }
+
+        function sendHeartbeat() {
+            // Send heartbeat if we have a username. Allow heartbeats even before a match is found
+            if (!username) return;
+            fetch(apiUrl('/api/anon/heartbeat'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            })
+            .then(r=>r.json())
+            .then(resp => {
+                const status = resp?.data?.status || resp?.status;
+                if (status === 'closed') {
+                    handleChatClosed(resp?.data?.reason || 'closed');
+                }
+            })
+            .catch(()=>{});
+        }
+
+        function startHeartbeat() {
+            if (heartbeatTimer) clearInterval(heartbeatTimer);
+            // Immediately send a heartbeat when starting, then continue periodically.
+            try { sendHeartbeat(); } catch (_) {}
+            // If not matched yet, send more frequently (5s) so the backend sees us as online while searching.
+            const intervalMs = (found ? 25000 : 5000);
+            heartbeatTimer = setInterval(sendHeartbeat, intervalMs);
+        }
+
+        // Lightweight room-state polling to detect new messages or room closure with minimal reads
+        let roomStatePollRunning = false;
+        async function pollRoomStateLoop() {
+            if (roomStatePollRunning) return;
+            roomStatePollRunning = true;
+            try {
+                let lastVersion = null;
+                while (found && roomId) {
+                    try {
+                        const url = new URL(apiUrl('/api/room_state'), window.location.origin);
+                        url.searchParams.set('room_id', roomId);
+                        const res = await fetch(url.toString());
+                        const j = await res.json().catch(()=>({}));
+                        const data = j?.data || {};
+                        const version = data?.version ?? null;
+                        // If version changed (new message or deletion), refresh messages and check session
+                        if (lastVersion === null) {
+                            lastVersion = version;
+                        } else if (version !== lastVersion) {
+                            lastVersion = version;
+                            // fetch latest messages and also check whether the room still exists
+                            refreshMessages();
+                            // Also GET user state via anon/wait fallback to determine if closed
+                            const waitUrl = new URL(apiUrl('/api/anon/wait'), window.location.origin);
+                            waitUrl.searchParams.set('username', username);
+                            const waitRes = await fetch(waitUrl.toString());
+                            const waitJson = await waitRes.json().catch(()=>({}));
+                            const waitData = waitJson?.data || {};
+                            if (waitData && (waitData.chatting === 0 || !waitData.current_room_id)) {
+                                handleChatClosed('closed');
+                                break;
+                            }
+                        }
+                    } catch (e) {
+                        // network or server error: fall back to anon/wait briefly
+                        try {
+                            const url = new URL(apiUrl('/api/anon/wait'), window.location.origin);
+                            url.searchParams.set('username', username);
+                            const res = await fetch(url.toString());
+                            const j = await res.json().catch(()=>({}));
+                            const data = j?.data || {};
+                            if (data && (data.chatting === 0 || !data.current_room_id)) {
+                                handleChatClosed('closed');
+                                break;
+                            }
+                        } catch (_) {}
+                    }
+                    // poll interval: small and cheap single-row GETs
+                    await new Promise(r=>setTimeout(r, 2000));
+                }
+            } finally {
+                roomStatePollRunning = false;
+            }
+        }
+
+        function startMessagesPolling() {
+            if (messagesTimer) clearInterval(messagesTimer);
+            // 先拉一次，再进入轮询
+            refreshMessages();
+            messagesTimer = setInterval(refreshMessages, 3000); // 每3秒刷新消息
+        }
+
+        function showEndConfirm() {
+            let popup = document.getElementById('end-confirm-popup');
+            if (popup) { popup.remove(); }
+            popup = document.createElement('div');
+            popup.id = 'end-confirm-popup';
+            popup.style.position = 'fixed';
+            popup.style.left = '0';
+            popup.style.top = '0';
+            popup.style.width = '100vw';
+            popup.style.height = '100vh';
+            popup.style.background = 'rgba(0,0,0,0.18)';
+            popup.style.zIndex = '9999';
+            popup.style.display = 'flex';
+            popup.style.alignItems = 'center';
+            popup.style.justifyContent = 'center';
+            popup.innerHTML = `
+                <div style="background:#fff;border-radius:16px;box-shadow:0 2px 16px rgba(58,122,254,0.12);padding:28px 32px;display:flex;flex-direction:column;align-items:center;gap:14px;">
+                    <div style="font-size:1.05rem;color:#333;">确认结束本次聊天吗？</div>
+                    <div style="display:flex;gap:12px;">
+                        <button id="end-confirm-yes" style="background:#e53935;color:#fff;border:none;border-radius:24px;padding:10px 28px;font-size:1rem;font-weight:600;cursor:pointer;">确定</button>
+                        <button id="end-confirm-no" style="background:#e3f0ff;color:#3a7afe;border:none;border-radius:24px;padding:10px 28px;font-size:1rem;font-weight:600;cursor:pointer;">取消</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(popup);
+            document.getElementById('end-confirm-no').onclick = function() { popup.remove(); };
+            document.getElementById('end-confirm-yes').onclick = function() { popup.remove(); endChatActive(); };
+        }
+
+        function endChatActive() {
+            if (!otherUser || !username) { return; }
+            fetch(apiUrl('/api/end_anonymous_chat'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, other_username: otherUser })
+            }).then(()=>{
+                clearAllTimers();
+                // 提示并回到搜索
+                handleChatClosed('closed');
+            }).catch(()=>{
+                clearAllTimers();
+                handleChatClosed('closed');
+            });
+        }
+
+        function matchOnce() {
+            fetch(apiUrl('/api/match_anonymous_chat'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            })
+                .then(res => res.json())
+            .then(resp => {
+                const data = resp?.data || {};
+                if (data && data.other_username) {
+                    found = true;
+                    roomId = data.room_id;
+                    otherUser = data.other_username;
+                    try { console.debug('matchOnce: matched', { roomId, otherUser, data }); } catch (e) {}
+                    // Do not display other user's personal info in the header for anonymity.
+                    document.getElementById('other-avatar').textContent = '😶';
+                    document.getElementById('other-name').textContent = '匿名用户';
+                    document.getElementById('other-interest').textContent = '';
+                    document.getElementById('other-mood').textContent = '';
+                    if (matchTimer) { clearInterval(matchTimer); matchTimer = null; }
+                    startHeartbeat();
+                    startMessagesPolling();
+                    // start lightweight room-state polling for this room
+                    try { pollRoomStateLoop().catch(()=>{}); } catch (_) {}
+                    showPanel('chat-panel');
+                    refreshMessages();
+                } else {
+                    if (!found) showPanel('searching-panel');
+                }
+            })
+            .catch(() => {
+                if (!found) {
+                    showPanel('network-error-panel');
+                    setTimeout(() => { if (!found) showPanel('searching-panel'); }, 1500);
+                }
+            });
+        }
+
+        function startPolling() {
+            matchOnce();
+            if (matchTimer) clearInterval(matchTimer);
+            matchTimer = setInterval(() => {
+                if (!found) matchOnce();
+                else {
+                        fetch(apiUrl('/api/match_anonymous_chat'), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username })
+                    }).then(r=>r.json()).then(resp=>{
+                        const data = resp?.data || {};
+                        if (data && data.other_username && data.room_id) {
+                            roomId = data.room_id;
+                            otherUser = data.other_username;
+                            // Keep header anonymous: hide personal info
+                            document.getElementById('other-name').textContent = '匿名用户';
+                            document.getElementById('other-interest').textContent = '';
+                            document.getElementById('other-mood').textContent = '';
+                            startHeartbeat();
+                            startMessagesPolling();
+                            try { pollRoomStateLoop().catch(()=>{}); } catch (_) {}
+                        }
+                    }).catch(()=>{});
+                }
+            }, retryIntervalMs);
+            // Ensure heartbeat runs while polling/searching (interval will be chosen by startHeartbeat based on `found`)
+            try { startHeartbeat(); } catch (_) {}
+        }
+
+    startPolling();
+    // Start sending heartbeats immediately on page open
+    try { startHeartbeat(); } catch (_) {}
+        setTimeout(function() { if (!found) { showPanel('search-fail-panel'); } }, 60000);
+    window.addEventListener('beforeunload', () => { clearAllTimers(); });
+    const endBtn = document.getElementById('end-chat-btn');
+    if (endBtn) endBtn.addEventListener('click', async function(){
+        const ok = await showModalConfirm('确认结束本次聊天吗？');
+        if (ok) endChatActive();
+    });
+    const reportBtn = document.getElementById('report-btn');
+    if (reportBtn) reportBtn.addEventListener('click', async ()=>{
+        const reason = await showModalPrompt('请输入举报理由（可选）', '');
+        if (reason === null) return; // user cancelled
+        fetch(apiUrl('/api/report'), { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ reporter: username, target_username: otherUser, target_room_id: roomId, reason, details: '' }) });
+        try { if (window.showSmallPopup) window.showSmallPopup('已提交举报，管理员会审查', { type: 'success', duration: 2500 }); else console.log('已提交举报，管理员会审查'); } catch(e) { console.log('已提交举报，管理员会审查'); }
+    });
+        // 左侧用户信息区可复用 mood-record.html 的逻辑
+        // 顶部对方信息在匹配成功后已填充
+        // 聊天逻辑（与 ai-chat.html 类似）
+        const chatBox = document.getElementById('ai-chat');
+        const seenMessageIds = new Set();
+        // pendingLocalMessages: optimistic messages sent by this client that haven't been confirmed by server yet
+        // each item: { text: string, ts: ISOString }
+        const pendingLocalMessages = [];
+        function enforceOneScreen() {
+            // 移除最早的消息直到内容高度不超过容器高度（保留至少一条）
+            if (!chatBox) return;
+            const safeGuard = 500; // 防止极端情况下的长循环
+            let loop = 0;
+            while (chatBox.scrollHeight > chatBox.clientHeight && chatBox.children.length > 1 && loop < safeGuard) {
+                chatBox.removeChild(chatBox.firstElementChild);
+                loop++;
+            }
+        }
+        // 检查是否已记录今日心情
+        function hasTodayMood() {
+            const mood = document.getElementById('user-mood').textContent;
+            return mood && mood !== '心情' && mood !== '';
+        }
+        // 弹窗提示
+        function showMoodRequiredPopup() {
+            let popup = document.getElementById('mood-required-popup');
+            if (!popup) {
+                popup = document.createElement('div');
+                popup.id = 'mood-required-popup';
+                popup.style.position = 'fixed';
+                popup.style.left = '0';
+                popup.style.top = '0';
+                popup.style.width = '100vw';
+                popup.style.height = '100vh';
+                popup.style.background = 'rgba(0,0,0,0.18)';
+                popup.style.zIndex = '9999';
+                popup.style.display = 'flex';
+                popup.style.alignItems = 'center';
+                popup.style.justifyContent = 'center';
+                popup.innerHTML = `
+                    <div style="background:#fff;border-radius:16px;box-shadow:0 2px 16px rgba(58,122,254,0.12);padding:32px 36px;display:flex;flex-direction:column;align-items:center;">
+                        <div style="font-size:1.2rem;color:#3a7afe;margin-bottom:18px;">请先记录今天的情绪</div>
+                        <div style="display:flex;gap:18px;">
+                            <button id="go-mood-record" style="background:linear-gradient(90deg,#3a7afe 0%,#0056b3 100%);color:#fff;border:none;border-radius:24px;padding:10px 32px;font-size:1rem;font-weight:600;cursor:pointer;">去记录</button>
+                            <button id="cancel-mood-popup" style="background:#e3f0ff;color:#3a7afe;border:none;border-radius:24px;padding:10px 32px;font-size:1rem;font-weight:600;cursor:pointer;">取消</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(popup);
+                document.getElementById('go-mood-record').onclick = function() {
+                    window.location.href = './mood-record.html';
+                };
+                document.getElementById('cancel-mood-popup').onclick = function() {
+                    popup.remove();
+                };
+            }
+        }
+        function appendMsg(content, sender) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-msg ' + sender;
+            const bubble = document.createElement('div');
+            bubble.className = 'chat-bubble ' + sender;
+            // 发送人名字
+            const nameSpan = document.createElement('span');
+            nameSpan.style.fontWeight = 'bold';
+            nameSpan.style.marginRight = '8px';
+            nameSpan.style.color = sender === 'user' ? '#3a7afe' : '#222';
+            // For anonymity, never expose the partner's real name in message bubbles.
+            nameSpan.textContent = sender === 'user' ? (window.currentUserName || '我') : '对方';
+            bubble.appendChild(nameSpan);
+            const msgText = document.createElement('span');
+            msgText.textContent = content;
+            bubble.appendChild(msgText);
+            msgDiv.appendChild(bubble);
+            chatBox.appendChild(msgDiv);
+            // 控制不超过一个屏幕：若溢出则移除旧消息
+            enforceOneScreen();
+            // 保持滚动在底部以看到最新消息
+            scrollToBottom();
+            // 设置当前用户名
+            window.currentUserName = document.getElementById('user-name')?.textContent || '我';
+        }
+        function scrollToBottom() {
+            if (!chatBox) return;
+            // 下一帧再滚动，确保布局和滚动高度已刷新
+            requestAnimationFrame(() => {
+                chatBox.scrollTop = chatBox.scrollHeight;
+                // 兼容性兜底：滚动最后一个元素到可视区域底部
+                const last = chatBox.lastElementChild;
+                if (last && last.scrollIntoView) {
+                    last.scrollIntoView({ block: 'end' });
+                }
+            });
+        }
+        // 发送后刷新一次（非实时轮询），以及初次加载后可手动调用
+        let lastTimestamp = '';
+        function refreshMessages() {
+            if (!roomId) return;
+                const url = new URL(apiUrl('/api/anon/fetch'), window.location.origin);
+            url.searchParams.set('room_id', roomId);
+            if (lastTimestamp) url.searchParams.set('since', lastTimestamp);
+                const opts = {};
+                try { console.debug('anon/fetch requesting', { room_id: roomId, since: lastTimestamp || null }); } catch(e) {}
+            try {
+                // Always try to read the current stored public key at request time
+                let pub = clientPubPem;
+                try { if (window.cryptoClient && typeof window.cryptoClient.getPublicPem === 'function') pub = window.cryptoClient.getPublicPem() || pub; } catch (e) {}
+                // Do NOT send raw multi-line PEM as a request header (browser fetch will reject header values containing newlines).
+                // Instead, attach the PEM as a URL parameter `client_pub_pem` (URL-encoded). The server supports this fallback.
+                if (pub) {
+                    try { url.searchParams.set('client_pub_pem', pub); } catch (e) { /* best-effort */ }
+                }
+                // debug: indicate whether we attach pubkey param
+                try { console.debug('anon/fetch pubkey attached as param, hasPubKey=', !!pub); } catch (e) {}
+            } catch (e) {}
+            fetch(url.toString(), opts)
+                .then(async res => {
+                    try { console.debug('anon/fetch response status=', res.status); } catch (e) {}
+                    const text = await res.text().catch(()=>null);
+                    if (text === null) {
+                        try { console.error('anon/fetch: unable to read response text'); } catch (e) {}
+                        return {};
+                    }
+                    try {
+                        const parsed = text ? JSON.parse(text) : {};
+                        try { console.debug('anon/fetch parsed keys=', Object.keys(parsed)); } catch (e) {}
+                        return parsed;
+                    } catch (e) {
+                        try { console.error('anon/fetch: JSON parse failed, raw=', String(text).slice(0,200)); } catch (err) {}
+                        return {};
+                    }
+                })
+                .then(async resp => {
+                    let msgs = (resp?.data?.messages || resp?.messages || []);
+                    try { console.debug('anon/fetch got messages count=', (msgs || []).length); } catch (e) {}
+                    // If server returned encrypted strings (stored with STORAGE_SECRET),
+                    // try a retry: if we have a client public key, re-request with client_pub_pem
+                    // so server will re-wrap messages for this client.
+                    try {
+                        const hasEncryptedStrings = (msgs || []).some(m => m && typeof m.message === 'string' && String(m.message).startsWith('ENC:'));
+                        if (hasEncryptedStrings) {
+                            // attempt to read current pubkey
+                            let pub = null;
+                            try { if (window.cryptoClient && typeof window.cryptoClient.getPublicPem === 'function') pub = window.cryptoClient.getPublicPem(); } catch (e) { pub = null; }
+                            if (pub) {
+                                try {
+                                    console.debug('anon/fetch: detected encrypted strings, retrying with client_pub_pem');
+                                    const retryUrl = new URL(url.toString());
+                                    retryUrl.searchParams.set('client_pub_pem', pub);
+                                    const retryRes = await fetch(retryUrl.toString());
+                                    const retryJson = await retryRes.json().catch(()=>null) || {};
+                                    msgs = (retryJson?.data?.messages || retryJson?.messages || msgs);
+                                } catch (e) {
+                                    console.debug('anon/fetch retry failed', e);
+                                }
+                            }
+                        }
+                    } catch (e) {}
+                    try { console.debug('anon/fetch got messages count=', (msgs || []).length); } catch (e) {}
+                    for (const m of msgs) {
+                        if (!m) continue;
+                        const msgTs = (m.timestamp || m.ts || new Date().toISOString());
+                        // If message has no id, synthesize a temporary id to avoid dropping it
+                        const mid = (typeof m.id !== 'undefined' && m.id !== null) ? m.id : (`temp_${msgTs}_${String(m.sender||'').slice(0,6)}`);
+                        try { console.debug('anon/fetch msg', { id: mid, sender: m.sender, preview: (typeof m.message === 'string' ? m.message.slice(0,60) : (m.message && m.message.cipher ? String(m.message.cipher).slice(0,60) : '[obj]')), timestamp: msgTs }); } catch(e) {}
+                        if (seenMessageIds.has(mid)) continue;
+                        let content = m.message;
+                        try {
+                            if (window.cryptoClient && typeof window.cryptoClient.decryptMessagePayload === 'function' && typeof m.message === 'object') {
+                                const dec = await window.cryptoClient.decryptMessagePayload(m.message);
+                                content = dec || '';
+                            }
+                        } catch (e) { try { console.error('anon/fetch: decryption failed for msg id=', mid, e); } catch (err) {} }
+
+                        // If this message looks like one we just sent optimistically, dedupe it.
+                        const serverTs = (m.timestamp || m.ts || new Date().toISOString());
+                        let deduped = false;
+                        if (m.sender === username && pendingLocalMessages.length > 0) {
+                            for (let i = 0; i < pendingLocalMessages.length; i++) {
+                                const p = pendingLocalMessages[i];
+                                if (!p) continue;
+                                // match by exact text; also allow fuzzy time window if needed
+                                if (String(p.text) === String(content)) {
+                                    // confirm and remove pending entry; mark this server id as seen and skip rendering duplicate
+                                    pendingLocalMessages.splice(i, 1);
+                                    seenMessageIds.add(mid);
+                                    lastTimestamp = serverTs;
+                                    deduped = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (deduped) continue;
+
+                        appendMsg(content, m.sender === username ? 'user' : 'other');
+                        seenMessageIds.add(mid);
+                        lastTimestamp = msgTs;
+                    }
+                    // 再保险：刷新后也执行一次限制
+                    enforceOneScreen();
+                    // 刷新后滚动到底，显示最新消息
+                    scrollToBottom();
+                })
+                .catch(() => {});
+        }
+
+        document.getElementById('send-btn').onclick = sendMessage;
+        document.getElementById('chat-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        function sendMessage() {
+            const inputElem = document.getElementById('chat-input');
+            const input = inputElem.value.trim();
+            if (!input) return;
+            if (!hasTodayMood()) {
+                showMoodRequiredPopup();
+                return;
+            }
+            // Optimistic append: show the sent message immediately
+            try {
+                const now = new Date().toISOString();
+                appendMsg(input, 'user');
+                // remember as pending so we can dedupe when server returns the same message
+                pendingLocalMessages.push({ text: input, ts: now });
+            } catch (e) {}
+            fetch(apiUrl('/api/anon/send'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ room_id: roomId, sender: username, recipient: otherUser, message: input })
+            }).then(() => {
+                refreshMessages();
+            });
+            inputElem.value = '';
+        }
+    </script>
+    <script>
+        try { console.debug('anon-chat: debug helper installed'); } catch (e) {}
+        window.__debugAnon = {
+            status: function() {
+                try { console.log({ found: !!found, roomId: roomId, messagesTimer: messagesTimer, heartbeatTimer: heartbeatTimer, roomStatePollRunning: !!roomStatePollRunning, lastTimestamp: lastTimestamp }); } catch (e) { console.error(e); }
+            },
+            ensurePolling: function() {
+                try { console.debug('anon-chat: ensurePolling called'); } catch (e) {}
+                try { startMessagesPolling(); console.log('anon-chat: startMessagesPolling invoked'); } catch (e) { console.error('anon-chat: ensurePolling failed', e); }
+            }
+        };
+
+        // Small on-page debug overlay: mirrors console.log/debug to the page so you can see messages
+        (function installOnPageLogger(){
+            try {
+                const dbg = document.createElement('div');
+                dbg.id = '__anon_debug_overlay';
+                dbg.style.position = 'fixed';
+                dbg.style.right = '12px';
+                dbg.style.bottom = '12px';
+                dbg.style.width = '360px';
+                dbg.style.maxHeight = '40vh';
+                dbg.style.overflowY = 'auto';
+                dbg.style.background = 'rgba(0,0,0,0.75)';
+                dbg.style.color = '#fff';
+                dbg.style.fontSize = '12px';
+                dbg.style.lineHeight = '1.2';
+                dbg.style.padding = '8px';
+                dbg.style.borderRadius = '8px';
+                dbg.style.zIndex = '999999';
+                dbg.style.fontFamily = 'monospace';
+                dbg.style.boxShadow = '0 6px 24px rgba(0,0,0,0.4)';
+                dbg.style.pointerEvents = 'auto';
+                dbg.title = 'anon-chat debug (click to clear)';
+                dbg.addEventListener('click', function(){ dbg.innerHTML = ''; });
+                document.body.appendChild(dbg);
+
+                function appendLine(kind, args) {
+                    try {
+                        const el = document.createElement('div');
+                        el.style.padding = '2px 0';
+                        el.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+                        const ts = (new Date()).toLocaleTimeString();
+                        const text = args.map(a => {
+                            try { return (typeof a === 'string') ? a : JSON.stringify(a); } catch (e) { return String(a); }
+                        }).join(' ');
+                        el.textContent = `[${ts}] ${kind}: ${text}`;
+                        dbg.appendChild(el);
+                        while (dbg.childElementCount > 200) dbg.removeChild(dbg.firstChild);
+                        dbg.scrollTop = dbg.scrollHeight;
+                    } catch (e) { /* ignore */ }
+                }
+
+                const originalLog = console.log.bind(console);
+                const originalDebug = console.debug ? console.debug.bind(console) : originalLog;
+                const originalError = console.error.bind(console);
+
+                console.log = function(...args){ originalLog(...args); appendLine('LOG', args); };
+                console.debug = function(...args){ originalDebug(...args); appendLine('DBG', args); };
+                console.error = function(...args){ originalError(...args); appendLine('ERR', args); };
+            } catch (e) { /* fail silently */ }
+        })();
+    </script>
+
+    <script src="./tracker.js"></script>
+    <script src="./maint-popup.js"></script>
+</body>
+</html>

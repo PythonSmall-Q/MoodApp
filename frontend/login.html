@@ -1,0 +1,270 @@
+<!-- 登录页面：情绪小助手 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 情绪小助手</title>
+  <script src="./api-config.js"></script>
+    <!-- 页面样式 -->
+    <link rel="stylesheet" href="./styles.css">
+    <style>
+        /* 页面基础样式 */
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            background: #222;
+            position: relative;
+            overflow: hidden;
+        }
+        /* 背景图片样式 */
+        .bg-img {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            object-fit: cover;
+            z-index: 0;
+            filter: brightness(0.7) blur(2px);
+            transition: opacity 0.8s;
+        }
+        /* 登录表单容器样式 */
+        .login-container {
+            position: relative;
+            z-index: 1;
+            max-width: 360px;
+            margin: 80px auto;
+            background: rgba(255,255,255,0.92);
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(58,122,254,0.12);
+            padding: 40px 32px 32px 32px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        /* 登录标题样式 */
+        .login-title {
+            font-size: 2rem;
+            color: #3a7afe;
+            margin-bottom: 24px;
+            font-weight: 700;
+        }
+        /* 输入框样式 */
+        .login-form input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 18px;
+            border-radius: 8px;
+            border: 1px solid #3a7afe;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        /* 登录按钮样式 */
+        .login-form button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(90deg, #3a7afe 0%, #0056b3 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            box-sizing: border-box;
+        }
+        .login-form button:hover {
+            background: linear-gradient(90deg, #0056b3 0%, #3a7afe 100%);
+        }
+        /* 注册链接样式 */
+        .register-link {
+            display: block;
+            margin-top: 18px;
+            color: #3a7afe;
+            text-decoration: underline;
+            font-size: 1rem;
+        }
+    </style>
+        <script src="./api-config.js"></script>
+</head>
+<body>
+    <img id="bg-img" class="bg-img" src="" alt="背景图片" />
+    <div id="login-error-popup" class="popup-error">
+        <!-- 登录失败弹窗 -->
+        <span class="popup-icon">&#9888;</span>
+        <span class="popup-text">用户名密码错误或账户未注册</span>
+        <span class="popup-close" id="popup-close">&times;</span>
+    </div>
+    <!-- 弹窗样式 -->
+    <style>
+        .popup-error {
+            display: none;
+            position: fixed;
+            top: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(90deg, #fff 80%, #ffeaea 100%);
+            color: #d32f2f;
+            padding: 16px 40px 16px 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(58,122,254,0.18);
+            font-size: 1.1rem;
+            z-index: 1001;
+            align-items: center;
+            min-width: 260px;
+            max-width: 90vw;
+            animation: fadeInPopup 0.5s;
+        }
+        .popup-icon {
+            font-size: 1.5rem;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+        .popup-text {
+            vertical-align: middle;
+        }
+        .popup-close {
+            position: absolute;
+            right: 16px;
+            top: 10px;
+            font-size: 1.3rem;
+            color: #d32f2f;
+            cursor: pointer;
+            font-weight: bold;
+            transition: color 0.2s;
+        }
+        .popup-close:hover {
+            color: #3a7afe;
+        }
+        @keyframes fadeInPopup {
+            from { opacity: 0; transform: translateX(-50%) scale(0.95); }
+            to { opacity: 1; transform: translateX(-50%) scale(1); }
+        }
+    </style>
+    <div class="login-container">
+        <div class="login-title">登录情绪小助手</div>
+        <form class="login-form" style="display: flex; flex-direction: column; align-items: stretch; gap: 0;">
+            <input type="text" id="username" autocomplete="username" placeholder="用户名" required />
+            <input type="password" id="password" autocomplete="current-password" placeholder="密码" required />
+            <button type="submit">登录</button>
+        </form>
+    <button id="back-index" class="btn btn-ghost" style="margin-top:18px;width:100%;padding:12px;font-size:1.05rem;">返回首页</button>
+        <a class="register-link" href="./register.html">没有账号？去注册</a>
+    </div>
+    <script>
+        // 返回首页按钮点击事件
+        document.getElementById('back-index').onclick = function() {
+            window.location.href = './index.html';
+        };
+
+        // 20张背景图片路径
+        const images = [
+            './pics/1.jpg','./pics/2.jpg','./pics/3.jpg','./pics/4.jpg','./pics/5.jpg',
+            './pics/6.jpg','./pics/7.jpg','./pics/8.jpg','./pics/9.jpg','./pics/10.jpg',
+            './pics/11.jpg','./pics/12.jpg','./pics/13.jpg','./pics/14.jpg','./pics/15.jpg',
+            './pics/16.jpg','./pics/17.jpg','./pics/18.jpg','./pics/19.jpg','./pics/20.jpg'
+        ];
+        const bgImg = document.getElementById('bg-img');
+        // 随机设置背景图片
+        function setRandomBg() {
+            const idx = Math.floor(Math.random() * images.length);
+            bgImg.src = images[idx];
+        }
+        setRandomBg();
+        // 背景图片加载完成后登录框淡入
+        bgImg.onload = function() {
+            document.querySelector('.login-container').style.opacity = '1';
+        };
+
+        // Compute API base (allow overriding via window.API_BASE)
+        const API_BASE = (typeof window !== 'undefined' && window.FEELINGS_API_BASE) ? window.FEELINGS_API_BASE : '';
+        console.debug('[login] API_BASE=', API_BASE);
+        try {
+            const apiOrigin = new URL(API_BASE).origin;
+            if (apiOrigin !== location.origin) {
+                console.warn('[login] API_BASE origin differs from page origin; server-set cookies may not be sent/received. API origin=', apiOrigin, 'page origin=', location.origin);
+            }
+        } catch (e) {}
+
+        // Global capture for client-side errors to help diagnostics
+        window.addEventListener('error', (ev) => { console.error('[login] uncaught error', ev.error || ev.message); });
+        window.addEventListener('unhandledrejection', (ev) => { console.warn('[login] unhandledrejection', ev.reason); });
+
+        // Single submit handler (avoid nested listeners)
+        document.querySelector('.login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            // 使用SHA-256加密密码
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+            // 发送登录请求
+            const loginUrl = apiUrl('/api/login');
+            console.debug('[login] POST', loginUrl, { username });
+
+            try {
+                const res = await fetch(loginUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username, password_sha: hashHex }),
+                    credentials: 'include'
+                });
+                let parsed = null;
+                try { parsed = await res.json(); } catch (e) { console.warn('[login] response JSON parse failed', e); }
+                console.debug('[login] response', res.status, parsed);
+
+                if (res.ok && parsed && parsed.ok) {
+                    // Wait for server-side session to be visible via whoami (reduce redirect loops)
+                    let okUser = null;
+                    for (let i = 0; i < 6; i++) {
+                        try {
+                            const whoRes = await fetch(apiUrl('/api/whoami'), { method: 'GET', credentials: 'include' });
+                            let whoJson = null;
+                            try { whoJson = await whoRes.json(); } catch (e) { console.warn('[login] whoami parse failed', e); }
+                            okUser = whoJson && whoJson.data && whoJson.data.username ? whoJson.data.username : null;
+                            console.debug('[login] whoami attempt', i+1, whoRes.status, okUser);
+                            if (okUser) break;
+                        } catch (e) { console.warn('[login] whoami request failed', e); }
+                        await new Promise(r => setTimeout(r, 300));
+                    }
+                    console.debug('[login] whoami result user=', okUser);
+                    try {
+                        const redirect = sessionStorage.getItem('post_login_redirect');
+                        if (redirect) {
+                            sessionStorage.removeItem('post_login_redirect');
+                            // mark that we just logged in so auth-guard can wait for server session
+                            try { sessionStorage.setItem('just_logged_in', Date.now().toString()); } catch (e) {}
+                            window.location.href = redirect;
+                            return;
+                        }
+                    } catch (e) {}
+                    // client-side fallback: store readable username so auth-guard and pages can detect login
+                    try { localStorage.setItem('username', username); } catch (e) {}
+                    try { document.cookie = `username=${encodeURIComponent(username)}; path=/;`; } catch (e) {}
+                    // mark that we just logged in so auth-guard can wait for server session
+                    try { sessionStorage.setItem('just_logged_in', Date.now().toString()); } catch (e) {}
+                    window.location.href = './ai-chat.html';
+                } else {
+                    throw new Error(parsed?.error || '登录失败');
+                }
+            } catch (err) {
+                console.error('[login] error', err);
+                // 登录失败弹窗显示
+                const popup = document.getElementById('login-error-popup');
+                popup.style.display = 'flex';
+                popup.style.animation = 'fadeInPopup 0.5s';
+                // 手动关闭弹窗
+                const closeBtn = document.getElementById('popup-close');
+                closeBtn.onclick = () => { popup.style.display = 'none'; };
+                // 自动关闭弹窗
+                setTimeout(() => { popup.style.display = 'none'; }, 2500);
+            }
+        });
+    </script>
+    <script src="./maint-popup.js"></script>
+</body>
+</html>

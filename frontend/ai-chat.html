@@ -1,0 +1,842 @@
+<!-- AI聊天页面：情绪小助手 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI聊天 - 情绪小助手</title>
+  <script src="./api-config.js"></script>
+    <!-- 页面样式 -->
+    <link rel="stylesheet" href="./styles.css">
+    <style>
+        /* 页面基础样式 */
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            background: #f7f8fa;
+            display: flex;
+            min-height: 100vh;
+        }
+        /* 侧边栏样式 */
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(120deg, #e3f0ff 0%, #f7f8fa 100%);
+            box-shadow: 2px 0 16px rgba(58,122,254,0.10);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px 0 24px 0;
+        }
+        .avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3a7afe 60%, #e3f0ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.8rem;
+            font-family: "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji","Segoe UI Symbol","Segoe UI",Arial,sans-serif;
+            color: #fff;
+            margin-bottom: 22px;
+            box-shadow: 0 2px 12px rgba(58,122,254,0.12);
+        }
+        .user-info {
+            text-align: center;
+            margin-bottom: 32px;
+            width: 85%;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(58,122,254,0.08);
+            padding: 18px 0 12px 0;
+        }
+        .user-info .name {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #3a7afe;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        .user-info .interest {
+            font-size: 1.05rem;
+            color: #4caf50;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .user-info .interest::before {
+            content: '🎯';
+            font-size: 1.1rem;
+        }
+        .user-info .mood {
+            font-size: 1.05rem;
+            color: #ff9800;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .user-info .mood::before {
+            content: '😊';
+            font-size: 1.1rem;
+        }
+        .sidebar-bottom {
+            margin-top: auto;
+            width: 100%;
+            text-align: center;
+        }
+        .anonymous-btn {
+            background: #fff;
+            color: #3a7afe;
+            border: 2px solid #3a7afe;
+            border-radius: 8px;
+            padding: 10px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .anonymous-btn:hover {
+            background: #3a7afe;
+            color: #fff;
+        }
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 0;
+            min-width: 0;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+        .mood-record-btn {
+            background: linear-gradient(90deg, #3a7afe 0%, #0056b3 100%);
+            color: #fff;
+            border: none;
+            border-radius: 24px;
+            padding: 12px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(58,122,254,0.12);
+            transition: background 0.2s;
+        }
+        .mood-record-btn:hover {
+            background: linear-gradient(90deg, #0056b3 0%, #3a7afe 100%);
+        }
+        .ai-chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(58,122,254,0.10);
+            padding: 24px 24px 0 24px;
+            margin: 0;
+            box-sizing: border-box;
+            max-width: none;
+        }
+        .ai-chat-title {
+            font-size: 1.2rem;
+            color: #3a7afe;
+            font-weight: 600;
+            margin-bottom: 18px;
+        }
+        .ai-chat-data {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 18px;
+        }
+        .ai-chat {
+            flex: 1;
+            min-height: 0;
+            max-height: none;
+            overflow-y: auto;
+            background: #f7f8fa;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 0;
+            font-size: 1rem;
+            color: #222;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chat-msg {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .chat-msg.user {
+            justify-content: flex-end;
+        }
+        .chat-msg.ai {
+            justify-content: flex-start;
+        }
+        .chat-bubble {
+            max-width: 70%;
+            padding: 8px 14px;
+            border-radius: 16px;
+            font-size: 1rem;
+            word-break: break-word;
+        }
+        .chat-bubble.user {
+            background: linear-gradient(90deg, #3a7afe 0%, #0056b3 100%);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-bubble.ai {
+            background: #e3f0ff;
+            color: #222;
+            border-bottom-left-radius: 4px;
+        }
+        .chat-input-row {
+            display: flex;
+            gap: 12px;
+            padding: 16px 0 18px 0;
+            border-top: 1px solid #e3f0ff;
+            background: #fff;
+            position: sticky;
+            bottom: 0;
+            z-index: 2;
+        }
+        .chat-input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #3a7afe;
+            font-size: 1rem;
+        }
+        .send-btn {
+            background: #3a7afe;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .send-btn:hover {
+            background: #0056b3;
+        }
+        #framework-hint.framework-active {
+            background: linear-gradient(90deg,#3a7afe 0%,#0056b3 100%);
+            color: #fff;
+            border: 1px solid transparent;
+        }
+    </style>
+    <style>
+        .avatar-dropdown {
+            position: absolute;
+            left: 32px;
+            top: 110px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(58,122,254,0.12);
+            padding: 12px 0;
+            min-width: 140px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .avatar-dropdown button {
+            background: none;
+            border: none;
+            padding: 10px 24px;
+            font-size: 1rem;
+            color: #3a7afe;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .avatar-dropdown button:hover {
+            background: #e3f0ff;
+        }
+    </style>
+    <style>
+        .avatar-dropdown {
+            position: absolute;
+            left: 32px;
+            top: 110px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(58,122,254,0.12);
+            padding: 12px 0;
+            min-width: 140px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .avatar-dropdown button {
+            background: none;
+            border: none;
+            padding: 10px 24px;
+            font-size: 1rem;
+            color: #3a7afe;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .avatar-dropdown button:hover {
+            background: #e3f0ff;
+        }
+    </style>
+</head>
+<body>
+    <script src="./api-config.js"></script>
+    <script src="./auth-guard.js"></script>
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <!-- 用户头像 -->
+        <div class="avatar" id="user-avatar">😊</div>
+        <div class="avatar-dropdown" id="avatar-dropdown" style="display:none;">
+            <button onclick="logoutUser()">退出账户</button>
+            <button onclick="editUserSettings()">修改用户设置</button>
+        </div>
+        <!-- 用户信息区 -->
+        <div class="user-info">
+            <!-- 用户名显示 -->
+            <div class="name" id="user-name">用户名</div>
+            <!-- 兴趣爱好显示 -->
+            <div class="interest" id="user-interest">兴趣爱好</div>
+            <!-- 心情显示 -->
+            <div class="mood" id="user-mood">心情</div>
+        </div>
+        <!-- 心情记录按钮 -->
+        <button onclick="location.href='mood-record.html'" class="mood-record-btn" id="mood-record" style="width:80%;margin-bottom:12px;">心情记录</button>
+        <button onclick="location.href='anonymous-chat.html'" class="mood-record-btn" id="anonymous-chat" style="width:80%;margin-bottom:18px;">匿名聊天</button>
+        <button onclick="location.href='bbs.html'" class="mood-record-btn" id="bbs" style="width:80%;margin-bottom:18px;">情绪留言板</button>
+            <a href="health.html" class="link-block">
+                <button class="mood-record-btn btn">系统健康</button>
+            </a>
+        <div class="sidebar-bottom">
+            <button class="user-settings-btn" id="user-settings-btn" style="width:80%;margin-bottom:18px;position:relative;">用户设置</button>
+            <div class="user-settings-dropdown" id="user-settings-dropdown" style="display:none;">
+                <button onclick="editUserSettings()">修改用户设置</button>
+                <button onclick="logoutUser()">登出</button>
+            </div>
+        </div>
+    <style>
+        .user-settings-btn {
+            background: linear-gradient(90deg, #3a7afe 0%, #0056b3 100%);
+            color: #fff;
+            border: none;
+            border-radius: 24px;
+            padding: 12px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 8px rgba(58,122,254,0.12);
+            transition: background 0.2s;
+        }
+        .user-settings-btn:hover {
+            background: linear-gradient(90deg, #0056b3 0%, #3a7afe 100%);
+        }
+        .user-settings-dropdown {
+            position: absolute;
+            left: 32px;
+            bottom: 48px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(58,122,254,0.12);
+            padding: 12px 0;
+            min-width: 140px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .user-settings-dropdown button {
+            background: none;
+            border: none;
+            padding: 10px 24px;
+            font-size: 1rem;
+            color: #3a7afe;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .user-settings-dropdown button:hover {
+            background: #e3f0ff;
+        }
+    </style>
+    </div>
+    <!-- 主内容区 -->
+    <div class="main">
+        <div class="ai-chat-container">
+            <!-- 聊天标题 -->
+            <div class="ai-chat-title">情绪小助手 <button id="framework-open-btn" onclick="openFrameworkPopup();return false;" class="btn btn-ghost" style="margin-left:12px;padding:4px 8px;font-size:0.9rem;">提示词框架</button></div>
+            <!-- AI数据展示区 -->
+            <div class="ai-chat-data" id="ai-chat-data"></div>
+            <!-- Prompt framework popup (shown once per day on first use) -->
+            <div id="framework-popup" class="hidden" style="position:fixed;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.22);z-index:10000;align-items:center;justify-content:center;"> 
+                <div class="modal-card" style="max-width:720px;margin:40px auto;position:relative;">
+                    <button id="framework-close" aria-label="关闭" style="position:absolute;right:12px;top:12px;background:transparent;border:none;font-size:20px;line-height:1;cursor:pointer;color:#666;padding:4px 8px;">×</button>
+                    <div style="font-size:1.1rem;font-weight:700;color:#3a7afe;margin-bottom:12px;">使用提示词框架（可选）</div>
+                    <div id="framework-explain" style="font-size:0.95rem;color:#444;margin-bottom:12px;">我们为您准备了一套标准提示词框架，使用它能够更好的让Ai快速了解您当前的问题，并给出您当下的心情分析和调节建议。</div>
+                </div>
+            </div>
+            <!-- 用户需填写的字段：主要原因、其他内容 -->
+            <div class="ai-chat-form" style="margin-bottom:12px;">
+                <div style="margin-bottom:8px;">
+                    <div style="font-weight:600;margin-bottom:6px;">主要原因（必填）</div>
+                    <textarea id="chief-reason-input" placeholder="请输入主要原因" class="chat-input"></textarea>
+                </div>
+                <div>
+                    <div style="font-weight:600;margin-bottom:6px;">其他内容（非必填）</div>
+                    <textarea id="other-contents-input" placeholder="请输入其他补充说明" class="chat-input"></textarea>
+                </div>
+                <div class="center gap-8" style="margin-top:8px;">
+                    <div id="framework-hint" role="button" tabindex="0" class="btn btn-ghost" style="padding:8px 12px;font-size:0.95rem;">使用我们的AI提示词框架（点击查看）</div>
+                </div>
+                <div style="margin-top:10px;display:flex;align-items:center;gap:12px;">
+                    <label style="display:flex;align-items:center;gap:6px;font-size:0.95rem;color:#444;">
+                        <input type="checkbox" id="context-toggle"> 启用上下文
+                    </label>
+                    <button id="clear-context-btn" class="btn btn-ghost" style="padding:6px 10px;font-size:0.9rem;">清除上下文</button>
+                    <div style="flex:1"></div>
+                </div>
+            </div>
+            <!-- AI回复内容区 -->
+            <div class="ai-chat" id="ai-chat"></div>
+            <!-- 发送区：使用上方的主要原因 + 其他内容 作为发送内容 -->
+            <div class="chat-input-row">
+                <div style="flex:1;color:#666;align-self:center;font-size:0.95rem;">填写上方“主要原因”和“其他内容”，然后点击发送</div>
+                <button class="send-btn" id="send-btn">发送</button>
+            </div>
+        </div>
+    </div>
+    <script src="./mood-map.js"></script>
+    <script>
+        // shared mood helpers available: numberToLabel, numberToEmoji
+        // 用户设置下拉栏逻辑
+        const userSettingsBtn = document.getElementById('user-settings-btn');
+        const userSettingsDropdown = document.getElementById('user-settings-dropdown');
+        userSettingsBtn.onclick = function(e) {
+            e.stopPropagation();
+            userSettingsDropdown.style.display = userSettingsDropdown.style.display === 'block' ? 'none' : 'block';
+        };
+        document.body.addEventListener('click', function() {
+            userSettingsDropdown.style.display = 'none';
+        });
+        // 退出账户
+        function logoutUser() {
+            document.cookie = 'username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            try { localStorage.removeItem('username'); } catch {}
+            window.location.href = './login.html';
+        }
+        // 修改用户设置（跳转或弹窗）
+        function editUserSettings() {
+            window.location.href = './user-settings.html';
+        }
+        // 获取cookie值
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+            return '';
+        }
+        // 获取用户名（优先cookie，回退localStorage）
+        function getUsername() {
+            const c = getCookie('username');
+            if (c) return c;
+            try { return localStorage.getItem('username') || ''; } catch { return ''; }
+        }
+
+        // Early element references and helpers (declared before init so they are available during init)
+        const sendBtnEl = document.getElementById('send-btn');
+        const chiefInputEl = document.getElementById('chief-reason-input');
+        const otherInputEl = document.getElementById('other-contents-input');
+    const frameworkHelpLink = document.getElementById('framework-help-link');
+    const frameworkHint = document.getElementById('framework-hint');
+    // Provide a lightweight open function so the popup can be shown reliably
+    function openFrameworkPopup() {
+        try {
+            const popup = document.getElementById('framework-popup');
+            if (!popup) return;
+            popup.style.display = 'flex';
+            // popup opened
+        } catch (err) { console.warn('openFrameworkPopup failed', err); }
+    }
+
+    // Resilient hint wiring: ensure the small hint opens the popup even before init runs
+    if (frameworkHint) {
+        frameworkHint.addEventListener('click', (e) => { e.preventDefault(); openFrameworkPopup(); try{ updateSendButtonState(); }catch(e){} });
+        frameworkHint.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFrameworkPopup(); } });
+    }
+    if (frameworkHelpLink) frameworkHelpLink.addEventListener('click', (e) => { e.preventDefault(); openFrameworkPopup(); });
+    const topFrameworkBtn = document.getElementById('framework-open-btn');
+    if (topFrameworkBtn) topFrameworkBtn.addEventListener('click', (e) => { e.preventDefault(); openFrameworkPopup(); });
+    // Global close helpers: close button, click on overlay, and Escape key
+    function closeFrameworkPopup() {
+        try { const p = document.getElementById('framework-popup'); if (p) p.style.display = 'none'; } catch (e) {}
+    }
+    // close when clicking on overlay (but not the inner card)
+    document.addEventListener('click', function(e) {
+        try {
+            const p = document.getElementById('framework-popup');
+            if (!p) return;
+            if (p.style.display === 'flex' && e.target === p) {
+                closeFrameworkPopup();
+            }
+        } catch (e) {}
+    });
+    // close when clicking the close button (if present)
+    const globalFrameworkClose = document.getElementById('framework-close');
+    if (globalFrameworkClose) globalFrameworkClose.addEventListener('click', function(e){ e.preventDefault(); closeFrameworkPopup(); });
+    // ESC key to close
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeFrameworkPopup(); });
+        function isInlineFrameworkChecked() { return false; }
+
+        function updateSendButtonState(){
+            try{
+                // Determine whether framework mode is active via session (useFramework)
+                const frameworkActive = useFramework;
+                // effective chief reason may come from fixedChiefReason (applied via popup) or the main textarea
+                const effectiveChief = (fixedChiefReason && fixedChiefReason.trim()) || (chiefInputEl && String(chiefInputEl.value || '').trim()) || '';
+                if (!sendBtnEl) return;
+                // Require chief reason to be present for sending (other contents optional)
+                // Also disable while waiting for a reply
+                const shouldDisable = !effectiveChief || isWaitingForReply;
+                sendBtnEl.disabled = shouldDisable;
+                // Visual affordance
+                sendBtnEl.style.opacity = shouldDisable ? '0.6' : '1';
+            }catch(e){}
+        }
+        // watch chief/other inputs
+        if (chiefInputEl) chiefInputEl.addEventListener('input', updateSendButtonState);
+        if (otherInputEl) otherInputEl.addEventListener('input', updateSendButtonState);
+
+        // Resolve username: prefer client-side, otherwise call /api/whoami with credentials.
+        let username = getUsername();
+        // Conversation context support
+        const contextToggleEl = document.getElementById('context-toggle');
+        const clearContextBtn = document.getElementById('clear-context-btn');
+        // Maintain a simple client-side conversation history (array of {role: 'user'|'assistant', content: string})
+        const conversationHistory = [];
+        // How many previous messages to include when context is enabled
+        const CONTEXT_WINDOW = 6; // last 6 messages (user+assistant pairs ~ 3 turns)
+        function pushToHistory(role, content) {
+            try {
+                conversationHistory.push({ role: role, content: content });
+                // keep history bounded
+                if (conversationHistory.length > 100) conversationHistory.splice(0, conversationHistory.length - 100);
+            } catch (e) { console.warn('pushToHistory failed', e); }
+        }
+        // Restore persisted toggle state
+        try {
+            const saved = localStorage.getItem('ai_chat_use_context');
+            if (saved !== null && contextToggleEl) contextToggleEl.checked = saved === '1';
+        } catch (e) {}
+        if (contextToggleEl) contextToggleEl.addEventListener('change', function(){ try { localStorage.setItem('ai_chat_use_context', this.checked ? '1' : '0'); } catch(e){} });
+        if (clearContextBtn) clearContextBtn.addEventListener('click', function(){
+            conversationHistory.length = 0;
+            try { localStorage.removeItem('ai_chat_conversation'); } catch(e) {}
+            try { showSmallPopup && showSmallPopup('上下文已清除', { type: 'info' }); } catch(e){}
+        });
+    // Framework usage state: if user chooses the framework, store fixedChiefReason for this session
+    let useFramework = false;
+    let fixedChiefReason = '';
+        (async function resolveAndInit(){
+            // If client-side username missing, try server whoami a few times
+            if (!username) {
+                for (let i = 0; i < 6; i++) {
+                    try {
+                        const whoRes = await fetch(apiUrl('/api/whoami'), { method: 'GET', credentials: 'include' });
+                        let whoJson = null;
+                        try { whoJson = await whoRes.json(); } catch (e) { whoJson = null; }
+                        console.debug('[ai-chat] whoami attempt', i+1, 'status', whoRes.status, 'body', whoJson);
+                        const u = whoJson && whoJson.data && whoJson.data.username ? whoJson.data.username : null;
+                        if (u) {
+                            username = u;
+                            console.debug('[ai-chat] resolved username from whoami', username);
+                            try { localStorage.setItem('username', username); } catch (e) {}
+                            try { document.cookie = `username=${encodeURIComponent(username)}; path=/;`; } catch (e) {}
+                            break;
+                        }
+                    } catch (e) {
+                        // ignore
+                    }
+                    await new Promise(r => setTimeout(r, 250 * (i+1)));
+                }
+            }
+            if (!username) {
+                // still not authenticated -> redirect to login
+                window.location.href = './login.html';
+                return;
+            }
+
+            // show username in UI
+            document.getElementById('user-name').textContent = username;
+
+            // fetch user interest and mood from server (ensure credentials included)
+                try {
+                const res = await fetch(apiUrl(`/api/ai_chat_data?username=${encodeURIComponent(username)}`), { credentials: 'include' });
+                let resp = null;
+                try { resp = await res.json(); } catch(e) { resp = null; }
+                console.debug('[ai-chat] fetch ai_chat_data', 'status', res.status, 'body', resp);
+                const data = resp?.data || resp || {};
+                if (!res.ok) {
+                    document.getElementById('ai-chat-data').textContent = '无法获取用户信息（服务器返回错误）';
+                    console.warn('[ai-chat] ai_chat_data returned non-ok', res.status, resp);
+                }
+                // 示例数据: { type_number, present_mood, interest, chief_reason, other_contents }
+                document.getElementById('user-interest').textContent = data.interest || '兴趣爱好';
+                const moodText = numberToLabel(data.present_mood) || data.present_mood || '心情';
+                const moodEmoji = numberToEmoji(data.present_mood) || labelToEmoji(data.present_mood) || '';
+                // show emoji + label when available
+                document.getElementById('user-mood').textContent = moodEmoji ? `${moodEmoji} ${moodText}` : moodText;
+                // 展示AI相关数据
+                document.getElementById('ai-chat-data').innerHTML =
+                    `<b>当前心情:</b> ${moodEmoji ? (moodEmoji + ' ' + moodText) : moodText}<br>` +
+                    `<b>兴趣爱好:</b> ${data.interest || ''}<br>`;
+                // 填充或预填主要原因与其他内容到用户可编辑的 textarea
+                const chiefInput = document.getElementById('chief-reason-input');
+                    // Do NOT auto-fill chief_reason or other_contents — user must enter their own text.
+                    // Keep the interest/present_mood shown, but leave the textareas empty for user input.
+                    if (chiefInput) chiefInput.value = '';
+                    if (otherInput) otherInput.value = '';
+                // update send button state after populating
+                updateSendButtonState();
+                // Initialize the framework popup UI and handlers
+                function initFrameworkPopup(force) {
+                    try {
+                        const dayKey = `ai_framework_seen_${new Date().toISOString().slice(0,10)}`;
+                        if (!force && localStorage.getItem(dayKey)) return;
+                        const popup = document.getElementById('framework-popup');
+                        if (!popup) return;
+                        popup.style.display = 'flex';
+                        try { localStorage.setItem(dayKey, 'seen'); } catch(e) {}
+                    } catch (e) { console.warn('framework popup error', e); }
+                }
+                // Ensure the open button always works (allow manual reopen)
+                const openBtnAlways = document.getElementById('framework-open-btn');
+                if (openBtnAlways) openBtnAlways.onclick = function(){ initFrameworkPopup(true); };
+                // initialize (show once per day automatically)
+                initFrameworkPopup(false);
+                // Avoid duplicate close handlers here; global handlers above manage close logic
+                if (frameworkHelpLink) frameworkHelpLink.addEventListener('click', () => initFrameworkPopup(true));
+            } catch (e) {
+                console.warn('[ai-chat] failed to fetch ai_chat_data', e);
+            }
+        })();
+        // AI聊天逻辑：点击发送按钮时，将输入内容发送到服务器API接口
+        const chatBox = document.getElementById('ai-chat');
+        function appendMsg(content, sender) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-msg ' + sender;
+            const bubble = document.createElement('div');
+            bubble.className = 'chat-bubble ' + sender;
+            bubble.textContent = content;
+            msgDiv.appendChild(bubble);
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // 检查是否已记录今日心情
+        function hasTodayMood() {
+            const mood = document.getElementById('user-mood').textContent;
+            return mood && mood !== '心情' && mood !== '';
+        }
+
+        // 弹窗提示
+        function showMoodRequiredPopup() {
+            let popup = document.getElementById('mood-required-popup');
+            if (!popup) {
+                popup = document.createElement('div');
+                popup.id = 'mood-required-popup';
+                popup.style.position = 'fixed';
+                popup.style.left = '0';
+                popup.style.top = '0';
+                popup.style.width = '100vw';
+                popup.style.height = '100vh';
+                popup.style.background = 'rgba(0,0,0,0.18)';
+                popup.style.zIndex = '9999';
+                popup.style.display = 'flex';
+                popup.style.alignItems = 'center';
+                popup.style.justifyContent = 'center';
+                popup.innerHTML = `
+                    <div class="modal-card">
+                        <div class="popup-title">请先记录今天的情绪</div>
+                        <div class="modal-actions">
+                            <button id="go-mood-record" class="popup-btn-primary">去记录</button>
+                            <button id="cancel-mood-popup" class="popup-btn-ghost">取消</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(popup);
+                document.getElementById('go-mood-record').onclick = function() {
+                    window.location.href = './mood-record.html';
+                };
+                document.getElementById('cancel-mood-popup').onclick = function() {
+                    popup.remove();
+                };
+            }
+        }
+
+        function showFieldsRequiredPopup() {
+            let popup = document.getElementById('fields-required-popup');
+            if (!popup) {
+                popup = document.createElement('div');
+                popup.id = 'fields-required-popup';
+                popup.style.position = 'fixed';
+                popup.style.left = '0';
+                popup.style.top = '0';
+                popup.style.width = '100vw';
+                popup.style.height = '100vh';
+                popup.style.background = 'rgba(0,0,0,0.18)';
+                popup.style.zIndex = '9999';
+                popup.style.display = 'flex';
+                popup.style.alignItems = 'center';
+                popup.style.justifyContent = 'center';
+                popup.innerHTML = `
+                    <div class="modal-card">
+                        <div class="popup-title">请填写主要原因（其他内容可选），然后再发送</div>
+                        <div class="modal-actions">
+                            <button id="go-fill-fields" class="popup-btn-primary">去填写</button>
+                            <button id="cancel-fields-popup" class="popup-btn-ghost">取消</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(popup);
+                document.getElementById('go-fill-fields').onclick = function(){ popup.remove(); if (chiefInputEl) chiefInputEl.focus(); };
+                document.getElementById('cancel-fields-popup').onclick = function(){ popup.remove(); };
+            }
+        }
+
+        // 发送消息函数：使用主要原因 + 其他内容 作为消息体
+        let isWaitingForReply = false;
+        function sendMessage() {
+            // Prevent double-send while waiting for a reply
+            if (isWaitingForReply) return;
+
+            const chiefValCurrent = (fixedChiefReason && fixedChiefReason.trim()) || (chiefInputEl ? String(chiefInputEl.value || '').trim() : '');
+            const otherValCurrent = otherInputEl ? String(otherInputEl.value || '').trim() : '';
+            if (!chiefValCurrent) {
+                showFieldsRequiredPopup();
+                return;
+            }
+            if (!hasTodayMood()) {
+                showMoodRequiredPopup();
+                return;
+            }
+
+            // Build combined message
+            const combined = chiefValCurrent + (otherValCurrent ? '\n\n其他内容：' + otherValCurrent : '');
+
+            // show user's message immediately
+            appendMsg(combined, 'user');
+            // Push user's message into conversation history
+            pushToHistory('user', combined);
+
+            // Create a transient AI 'thinking' bubble that will be replaced when reply arrives
+            const thinkingMsgDiv = document.createElement('div');
+            thinkingMsgDiv.className = 'chat-msg ai';
+            const thinkingBubble = document.createElement('div');
+            thinkingBubble.className = 'chat-bubble ai thinking';
+            thinkingBubble.textContent = '思考中...';
+            thinkingMsgDiv.appendChild(thinkingBubble);
+            chatBox.appendChild(thinkingMsgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Optimistic UX: clear inputs immediately and disable send until reply/error
+            try {
+                if (chiefInputEl) chiefInputEl.value = '';
+                if (otherInputEl) otherInputEl.value = '';
+            } catch (e) { console.warn('failed to clear inputs optimistically', e); }
+            isWaitingForReply = true;
+            try { updateSendButtonState(); } catch (e) {}
+
+            // Build payload; include other_contents only if user provided it
+            const payload = { username, message: combined, present_mood: document.getElementById('user-mood').textContent };
+            // If context toggle is enabled, include a compact set of the last few user/assistant turns
+            try {
+                const useContext = contextToggleEl && contextToggleEl.checked;
+                if (useContext && conversationHistory.length) {
+                    // Build compact turns by pairing consecutive user+assistant items into turns and take last CONTEXT_WINDOW turns
+                    const turns = [];
+                    // Only keep user/assistant roles
+                    const filtered = conversationHistory.filter(m => m.role === 'user' || m.role === 'assistant');
+                    // We'll include the last CONTEXT_WINDOW *turns* where a turn is a single message (we keep sequence order)
+                    const start = Math.max(0, filtered.length - CONTEXT_WINDOW);
+                    payload.conversation = filtered.slice(start).map(m => ({ role: m.role, content: m.content }));
+                    // Also persist a compact snapshot client-side (best-effort)
+                    try { localStorage.setItem('ai_chat_conversation', JSON.stringify(payload.conversation)); } catch(e) {}
+                }
+            } catch (e) { console.warn('failed to attach conversation context', e); }
+            // If session-applied framework is active, include framework flags
+            if (useFramework) {
+                payload.use_framework = true;
+                payload.framework_prompt = fixedChiefReason || '';
+            } else if (chiefValCurrent) {
+                // Include chief reason as metadata when not using framework
+                payload.chief_reason = chiefValCurrent;
+            }
+            if (otherValCurrent) payload.other_contents = otherValCurrent;
+
+            fetch(apiUrl('/api/ai_chat_message'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                credentials: 'include'
+            })
+            .then(async res => {
+                let parsed = null;
+                try { parsed = await res.json(); } catch (e) { parsed = null; }
+                if (!res.ok) {
+                    const errMsg = (parsed && (parsed.error || (parsed.data && parsed.data.error))) || `服务器返回 ${res.status}`;
+                    thinkingBubble.textContent = `请求失败: ${errMsg}`;
+                    thinkingBubble.style.color = '#b00020';
+                    return null;
+                }
+                return parsed;
+            })
+            .then(resp => {
+                // Always mark waiting as finished when we get here (whether resp is null or not)
+                isWaitingForReply = false;
+                try { updateSendButtonState(); } catch (e) {}
+                if (!resp) return;
+                const data = resp?.data || resp || {};
+                // Replace thinking bubble content with AI reply
+                const aiReply = data.reply || 'AI回复内容';
+                thinkingBubble.textContent = aiReply;
+                // push AI reply into history so subsequent messages can reference it
+                pushToHistory('assistant', aiReply);
+            })
+            .catch(err => {
+                isWaitingForReply = false;
+                try { updateSendButtonState(); } catch (e) {}
+                thinkingBubble.textContent = `请求失败: ${err && err.message ? err.message : String(err)}`;
+                thinkingBubble.style.color = '#b00020';
+            });
+        }
+
+        document.getElementById('send-btn').onclick = sendMessage;
+        // ensure send button state reflects initial textarea values
+        try { updateSendButtonState(); } catch (e) {}
+        // 心情记录按钮（模拟）
+        document.getElementById('mood-record').onclick = function() {
+            window.location.href = './mood-record.html';
+        };
+        // 匿名聊天按钮（模拟）
+        document.getElementById('anonymous-chat').onclick = function() {
+            window.location.href = './anonymous-chat.html';
+        };
+    </script>
+    <script src="./tracker.js"></script>
+    <script src="./maint-popup.js"></script>
+</body>
+</html>

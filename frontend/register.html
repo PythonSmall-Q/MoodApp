@@ -1,0 +1,231 @@
+<!-- 注册页面：情绪小助手 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - 情绪小助手</title>
+  <script src="./api-config.js"></script>
+    <!-- 页面样式 -->
+    <link rel="stylesheet" href="./styles.css">
+    <style>
+        /* 页面基础样式 */
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            background: #222;
+            position: relative;
+            overflow: hidden;
+        }
+        /* 背景图片样式 */
+        .bg-img {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            object-fit: cover;
+            z-index: 0;
+            filter: brightness(0.7) blur(2px);
+            transition: opacity 0.8s;
+        }
+        /* 注册表单容器样式 */
+        .register-container {
+            position: relative;
+            z-index: 1;
+            max-width: 380px;
+            margin: 80px auto;
+            background: rgba(255,255,255,0.92);
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(58,122,254,0.12);
+            padding: 40px 32px 32px 32px;
+            text-align: center;
+        }
+        /* 注册标题样式 */
+        .register-title {
+            font-size: 2rem;
+            color: #3a7afe;
+            margin-bottom: 24px;
+            font-weight: 700;
+        }
+        /* 输入框样式 */
+        .register-form input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 18px;
+            border-radius: 8px;
+            border: 1px solid #3a7afe;
+            font-size: 1rem;
+        }
+        /* 注册按钮样式 */
+        .register-form button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(90deg, #3a7afe 0%, #0056b3 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .register-form button:hover {
+            background: linear-gradient(90deg, #0056b3 0%, #3a7afe 100%);
+        }
+        /* 登录链接样式 */
+        .login-link {
+            display: block;
+            margin-top: 18px;
+            color: #3a7afe;
+            text-decoration: underline;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- <script src="./auth-guard.js"></script> -->
+    <!-- 背景图片 -->
+    <img id="bg-img" class="bg-img" src="" alt="背景图片" />
+    <div class="register-container">
+        <!-- 注册标题 -->
+        <div class="register-title">注册情绪小助手</div>
+        <!-- 注册表单 -->
+        <form class="register-form">
+            <!-- 用户名输入框 -->
+            <input type="text" id="reg-username" placeholder="用户名" required />
+            <!-- 密码输入框 -->
+            <input type="password" id="reg-password" placeholder="密码" required />
+            <!-- 确认密码输入框 -->
+            <input type="password" id="reg-password2" placeholder="确认密码" required />
+            <!-- 兴趣爱好输入框 -->
+            <input type="text" id="reg-hobby" placeholder="兴趣爱好" required />
+            <!-- 性别选择下拉框 -->
+            <div style="text-align:left;margin-bottom:18px;">
+                <label for="reg-sex" style="margin-right:12px;">性别：</label>
+                <select id="reg-sex" required style="width:60%;padding:8px;border-radius:8px;border:1px solid #3a7afe;font-size:1rem;">
+                    <option value="" disabled selected>请选择</option>
+                    <option value="1">男</option>
+                    <option value="2">女</option>
+                    <option value="3">不愿透露</option>
+                </select>
+            </div>
+            <!-- 验证码输入框和问题 -->
+            <div style="text-align:left;margin-bottom:18px;">
+                <label for="reg-captcha" style="margin-right:12px;">验证码：</label>
+                <span id="captcha-question" style="font-weight:bold;color:#3a7afe;margin-right:12px;"></span>
+                <input type="text" id="reg-captcha" placeholder="请输入验证码" required style="width:40%;padding:8px;border-radius:8px;border:1px solid #3a7afe;font-size:1rem;" />
+            </div>
+            <!-- 注册按钮 -->
+            <button type="submit">注册</button>
+        </form>
+        <!-- 登录链接 -->
+        <a class="login-link" href="./login.html">已有账号？去登录</a>
+    </div>
+    <script src="./api-config.js"></script>
+    <script src="./small-popup.js"></script>
+    <script>
+        // 简单验证码逻辑
+        function generateCaptcha() {
+            // 生成简单的加法验证码
+            const a = Math.floor(Math.random()*10+1);
+            const b = Math.floor(Math.random()*10+1);
+            document.getElementById('captcha-question').textContent = `${a} + ${b} = ?`;
+            return a + b;
+        }
+        let captchaAnswer = generateCaptcha();
+        // 输入框聚焦时重新生成验证码
+        document.getElementById('reg-captcha').addEventListener('focus', function() {
+            captchaAnswer = generateCaptcha();
+        });
+        // 20张背景图片路径（与登录页一致）
+        const images = [
+            './pics/1.jpg',
+            './pics/2.jpg',
+            './pics/3.jpg',
+            './pics/4.jpg',
+            './pics/5.jpg',
+            './pics/6.jpg',
+            './pics/7.jpg',
+            './pics/8.jpg',
+            './pics/9.jpg',
+            './pics/10.jpg',
+            './pics/11.jpg',
+            './pics/12.jpg',
+            './pics/13.jpg',
+            './pics/14.jpg',
+            './pics/15.jpg',
+            './pics/16.jpg',
+            './pics/17.jpg',
+            './pics/18.jpg',
+            './pics/19.jpg',
+            './pics/20.jpg'
+        ];
+        const bgImg = document.getElementById('bg-img');
+        // 随机设置背景图片
+        function setRandomBg() {
+            const idx = Math.floor(Math.random() * images.length);
+            bgImg.src = images[idx];
+        }
+        setRandomBg();
+
+        // 注册表单提交事件
+        document.querySelector('.register-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('reg-username').value;
+            const password = document.getElementById('reg-password').value;
+            const password2 = document.getElementById('reg-password2').value;
+            const hobby = document.getElementById('reg-hobby').value;
+            const sex = document.getElementById('reg-sex').value;
+            const captchaInput = document.getElementById('reg-captcha').value;
+            // 校验两次密码是否一致
+            if (password !== password2) {
+                try { if (window.showSmallPopup) window.showSmallPopup('两次输入的密码不一致', { type: 'error', duration: 3000 }); else console.log('两次输入的密码不一致'); } catch(e) { console.log('两次输入的密码不一致'); }
+                return;
+            }
+            // 校验性别是否选择
+            if (!sex) {
+                try { if (window.showSmallPopup) window.showSmallPopup('请选择性别', { type: 'error', duration: 3000 }); else console.log('请选择性别'); } catch(e) { console.log('请选择性别'); }
+                return;
+            }
+            // 校验验证码
+            if (parseInt(captchaInput) !== captchaAnswer) {
+                try { if (window.showSmallPopup) window.showSmallPopup('验证码错误，请重新输入', { type: 'error', duration: 3000 }); else console.log('验证码错误，请重新输入'); } catch(e) { console.log('验证码错误，请重新输入'); }
+                captchaAnswer = generateCaptcha();
+                document.getElementById('reg-captcha').value = '';
+                return;
+            }
+            // 使用SHA-256加密密码
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            // 发送注册请求
+            fetch(apiUrl('/api/register'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: username,
+                    password_sha: hashHex,
+                    hobby: hobby,
+                    sex: Number(sex)
+                })
+            }).then(res => res.json()).then(data => {
+                if (data && data.ok) {
+                    // 注册成功，设置cookie并跳转
+                    document.cookie = `username=${encodeURIComponent(username)}; path=/; max-age=86400`;
+                    window.location.href = './ai-chat.html';
+                } else {
+                    try { if (window.showSmallPopup) window.showSmallPopup(data?.error || '注册失败，请重试！', { type: 'error', duration: 3000 }); else console.log(data?.error || '注册失败，请重试！'); } catch(e) { console.log(data?.error || '注册失败，请重试！'); }
+                    console.log(data);
+                }
+            }).catch(err => {
+                try { if (window.showSmallPopup) window.showSmallPopup('注册失败，请重试！', { type: 'error', duration: 3000 }); else console.log('注册失败，请重试！'); } catch(e) { console.log('注册失败，请重试！'); }
+            });
+        });
+    </script>
+    <script src="./tracker.js"></script>
+    <script src="./maint-popup.js"></script>
+
+</body>
+</html>

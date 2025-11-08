@@ -1,0 +1,118 @@
+:root{
+  --bg: #f6f8fb;
+  --card: #ffffff;
+  --muted: #6b7280;
+  --accent: #3a7afe;
+  --accent-2: #0056b3;
+  --success: #16a34a;
+  --danger: #b00020;
+  --radius: 10px;
+  --shadow: 0 6px 20px rgba(58,122,254,0.08);
+  --container-max: 1100px;
+}
+/* Base */
+html,body{height:100%;}
+body{
+  margin:0;
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background:var(--bg);
+  color:#222;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+/* content containers */
+.container{max-width:var(--container-max);margin:20px auto;padding:16px;box-sizing:border-box}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+
+/* Typography */
+h1,h2,h3{color:var(--accent);margin:0 0 8px 0}
+p{margin:0 0 10px 0;color:var(--muted)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:8px;padding:8px 12px;font-weight:600;cursor:pointer;border:none}
+.btn-primary{background:linear-gradient(90deg,var(--accent) 0%,var(--accent-2) 100%);color:#fff}
+.btn-ghost{background:transparent;border:1px solid #e6eefc;color:var(--accent)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn:disabled{opacity:0.6;cursor:default}
+
+/* Inputs */
+input[type=text],input[type=password],textarea,select{width:100%;padding:10px;border-radius:8px;border:1px solid #e6eefc;background:#fff;box-sizing:border-box;font-size:0.95rem}
+textarea{min-height:80px}
+label{font-weight:600;color:#333;font-size:0.95rem}
+
+/* Forms */
+.form-row{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+
+/* Header / sidebar tweaks (non-invasive) */
+.sidebar{background:linear-gradient(120deg,#eaf4ff 0%,#f7f8fa 100%);} 
+.sidebar, .sidebar * {
+  /* Ensure sidebar typography is consistent across all frontend pages */
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+.avatar{box-shadow:0 6px 18px rgba(58,122,254,0.12)}
+
+/* Chat specific */
+.ai-chat{background:transparent;padding:12px}
+.chat-bubble{line-height:1.5}
+.chat-bubble.user{box-shadow:0 6px 18px rgba(58,122,254,0.12)}
+
+/* Framework popup */
+#framework-popup > div{max-width:720px}
+
+/* Small utilities */
+.muted{color:var(--muted)}
+.text-center{text-align:center}
+
+/* Responsive */
+@media (max-width:800px){
+  .sidebar{display:none}
+  .container{padding:10px}
+}
+
+/* Accessibility focus */
+:focus{outline:3px solid rgba(58,122,254,0.18);outline-offset:2px}
+
+/* Small-popup consistency */
+.small-popup{position:fixed;left:50%;transform:translateX(-50%);top:18px;background:var(--card);border-radius:8px;padding:10px 14px;box-shadow:var(--shadow);z-index:12000}
+
+/* Utility / component helpers to replace common inline styles */
+.w-80{width:80%}
+.w-100{width:100%}
+.mb-12{margin-bottom:12px}
+.mb-10{margin-bottom:10px}
+.mb-18{margin-bottom:18px}
+.no-decoration{text-decoration:none}
+.link-block{display:block;width:80%;text-decoration:none;margin-bottom:18px}
+
+/* Sidebar buttons */
+.mood-record-btn{width:80%;margin-bottom:12px}
+.user-settings-btn{width:80%;margin-bottom:18px}
+
+/* Modal card used frequently */
+.modal-card{background:var(--card);border-radius:16px;box-shadow:0 2px 16px rgba(58,122,254,0.12);padding:28px 32px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.modal-actions{display:flex;gap:12px}
+
+/* Small popup / tips */
+.search-popup{display:flex}
+.hidden{display:none !important}
+
+/* Buttons used in popups */
+.popup-btn-primary{background:linear-gradient(90deg,var(--accent) 0%,var(--accent-2) 100%);color:#fff;border:none;border-radius:24px;padding:10px 28px;font-size:1rem;font-weight:600;cursor:pointer}
+.popup-btn-ghost{background:#e3f0ff;color:var(--accent);border:none;border-radius:24px;padding:10px 28px;font-size:1rem;font-weight:600;cursor:pointer}
+
+/* Reduce heavy inline shadows where present */
+.soft-card{box-shadow:0 4px 18px rgba(58,122,254,0.06)}
+
+/* Chat inputs and helpers */
+.chat-input{width:100%;min-height:64px;padding:8px;border-radius:8px;border:1px solid #e6eefc;background:#fff;resize:vertical;font-size:0.95rem;box-sizing:border-box}
+.chat-small{min-height:40px}
+.popup-title{font-size:1.1rem;color:var(--accent);font-weight:700;margin-bottom:12px}
+.center{display:flex;align-items:center;justify-content:center}
+.flex-1{flex:1}
+.gap-8{gap:8px}
+.muted-small{color:var(--muted);font-size:0.95rem}
+
+

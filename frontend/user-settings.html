@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>用户设置</title>
+  <script src="./api-config.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./styles.css">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f6fa; margin: 0; padding: 0; }
+        .container { max-width: 400px; margin: 60px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 32px; }
+        h2 { text-align: center; margin-bottom: 24px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="email"], input[type="password"] { width: 100%; padding: 10px; margin-bottom: 18px; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; padding: 12px; background: #007bff; color: #fff; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .error { color: #e74c3c; margin-bottom: 12px; }
+        .success { color: #27ae60; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+    <script src="./api-config.js"></script>
+    <script src="./auth-guard.js"></script>
+    <div class="settings-layout">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="avatar" id="user-avatar">😊</div>
+            <div class="user-info">
+                <div class="name" id="user-name">用户名</div>
+                <div class="interest" id="user-interest">兴趣爱好</div>
+                <div class="mood" id="user-mood">心情</div>
+            </div>
+            <button class="mood-record-btn btn" id="mood-record">心情记录</button>
+            <button class="mood-record-btn btn" id="anonymous-chat">匿名聊天</button>
+            <button class="user-settings-btn btn" id="user-settings-btn">情绪小助手</button>
+            <div class="sidebar-bottom">
+                <button class="user-settings-btn btn" id="logout-btn" style="position:relative;">退出账户</button>
+            </div>
+        </div>
+        <!-- 修改设置表单 -->
+        <div class="container settings-container">
+            <h2>修改密码</h2>
+            <div class="form-block">
+                <form id="passwordForm">
+                    <label for="oldPassword">旧密码</label>
+                    <input type="password" id="oldPassword" name="oldPassword" minlength="6">
+                    <label for="newPassword">新密码</label>
+                    <input type="password" id="newPassword" name="newPassword" minlength="6">
+                    <label for="confirmPassword">确认新密码</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" minlength="6">
+                    <div id="password-message"></div>
+                    <button type="submit">保存密码</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f6fa;
+            min-height: 100vh;
+        }
+        .settings-layout {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(120deg, #e3f0ff 0%, #f7f8fa 100%);
+            box-shadow: 2px 0 16px rgba(58,122,254,0.10);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px 0 24px 0;
+            height: 100vh;
+            min-height: 100vh;
+            border-radius: 0;
+        }
+        .settings-container {
+            max-width: 400px;
+            min-width: 320px;
+            background: #fff;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 32px;
+            min-height: 480px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+    h2 { text-align: center; margin-bottom: 24px; }
+    .form-block { margin-bottom: 32px; }
+    label { display: block; margin-bottom: 8px; font-weight: bold; }
+    input[type="password"] { width: 100%; padding: 10px; margin-bottom: 18px; border: 1px solid #ccc; border-radius: 4px; }
+    button[type="submit"] { width: 100%; padding: 12px; background: #007bff; color: #fff; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+    button[type="submit"]:hover { background: #0056b3; }
+    .error { color: #e74c3c; margin-bottom: 12px; }
+    .success { color: #27ae60; margin-bottom: 12px; }
+        /* 保留原 sidebar 内部样式 ...existing code... */
+        .avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3a7afe 60%, #e3f0ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.8rem;
+            color: #fff;
+            margin-bottom: 22px;
+            box-shadow: 0 2px 12px rgba(58,122,254,0.12);
+        }
+        .user-info {
+            text-align: center;
+            margin-bottom: 32px;
+            width: 85%;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(58,122,254,0.08);
+            padding: 18px 0 12px 0;
+        }
+        .user-info .name {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #3a7afe;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        .user-info .interest {
+            font-size: 1.05rem;
+            color: #4caf50;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .user-info .interest::before {
+            content: '🎯';
+            font-size: 1.1rem;
+        }
+        .user-info .mood {
+            font-size: 1.05rem;
+            color: #ff9800;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .user-info .mood::before {
+            content: '😊';
+            font-size: 1.1rem;
+        }
+        .sidebar-bottom {
+            margin-top: auto;
+            width: 100%;
+            text-align: center;
+        }
+        .user-settings-btn {
+            background: linear-gradient(90deg, #3a7afe 0%, #0056b3 100%);
+            color: #fff;
+            border: none;
+            border-radius: 24px;
+            padding: 12px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(58,122,254,0.12);
+            transition: background 0.2s;
+        }
+        .user-settings-btn:hover {
+            background: linear-gradient(90deg, #0056b3 0%, #3a7afe 100%);
+        }
+        .mood-record-btn {
+            background: linear-gradient(90deg, #3a7afe 0%, #0056b3 100%);
+            color: #fff;
+            border: none;
+            border-radius: 24px;
+            padding: 12px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(58,122,254,0.12);
+            transition: background 0.2s;
+        }
+        .mood-record-btn:hover {
+            background: linear-gradient(90deg, #0056b3 0%, #3a7afe 100%);
+        }
+    </style>
+    <script>
+        // shared mood helpers
+    </script>
+    <script src="./mood-map.js"></script>
+    <script>
+        // 显示用户名
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+            return '';
+        }
+        const username = getCookie('username');
+        if (username) {
+            document.getElementById('user-name').textContent = username;
+        } else {
+            document.getElementById('user-name').textContent = '';
+        }
+        // 从服务器获取兴趣和心情（可根据实际API替换）
+        fetch(apiUrl(`/api/ai_chat_data?username=${encodeURIComponent(username || '')}`))
+        .then(res => res.json()).then(resp => {
+            const data = resp?.data || resp || {};
+            document.getElementById('user-interest').textContent = data.interest || '兴趣爱好';
+            const moodText = numberToLabel(data.present_mood) || data.present_mood || '心情';
+            const moodEmoji = numberToEmoji(data.present_mood) || labelToEmoji(data.present_mood) || '';
+            document.getElementById('user-mood').textContent = moodEmoji ? `${moodEmoji} ${moodText}` : moodText;
+        });
+        // 侧边栏按钮功能
+        document.getElementById('logout-btn').onclick = function() {
+            document.cookie = 'username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            window.location.href = './login.html';
+        };
+        document.getElementById('mood-record').onclick = function() {
+            window.location.href = './mood-record.html';
+        };
+        document.getElementById('anonymous-chat').onclick = function() {
+            window.location.href = './anonymous-chat.html';
+        };
+        document.getElementById('user-settings-btn').onclick = function() {
+            window.location.href = './ai-chat.html';
+        };
+        // ...existing code...
+        // 密码修改表单
+        const passwordForm = document.getElementById('passwordForm');
+        const passwordMessage = document.getElementById('password-message');
+        // SHA-256 加密函数
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        passwordForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            passwordMessage.textContent = '';
+            passwordMessage.className = '';
+            const oldPassword = passwordForm.oldPassword.value;
+            const newPassword = passwordForm.newPassword.value;
+            const confirmPassword = passwordForm.confirmPassword.value;
+            if (!oldPassword) {
+                passwordMessage.textContent = '请输入旧密码';
+                passwordMessage.className = 'error';
+                return;
+            }
+            if (!newPassword || !confirmPassword) {
+                passwordMessage.textContent = '请输入新密码并确认';
+                passwordMessage.className = 'error';
+                return;
+            }
+            if (newPassword.length < 6) {
+                passwordMessage.textContent = '新密码至少6位';
+                passwordMessage.className = 'error';
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                passwordMessage.textContent = '两次输入的密码不一致';
+                passwordMessage.className = 'error';
+                return;
+            }
+            // SHA-256加密密码
+            const oldHashed = await sha256(oldPassword);
+            const hashedPassword = await sha256(newPassword);
+            const username = document.getElementById('user-name').textContent;
+            fetch(apiUrl('/api/change_password'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, old_password_sha: oldHashed, new_password_sha: hashedPassword })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.ok) {
+                    passwordMessage.textContent = '密码修改成功';
+                    passwordMessage.className = 'success';
+                } else {
+                    passwordMessage.textContent = data.error || '密码修改失败';
+                    passwordMessage.className = 'error';
+                }
+            })
+            .catch(() => {
+                passwordMessage.textContent = '网络错误，请稍后重试';
+                passwordMessage.className = 'error';
+            });
+        });
+    </script>
+    <script src="./tracker.js"></script>
+    <script src="./maint-popup.js"></script>
+    <script src="./csrf.js"></script>
+</body>
+</html>
