@@ -35,6 +35,8 @@
 
 默认已在 `src/worker.ts` 中对 CORS 设置为 `*`，如需限制请修改该文件。
 
+*记得修改代码中的api端点为你的api*
+
 ## 数据库与迁移
 
 项目使用 Cloudflare D1（兼容 SQLite 语法）。迁移文件位于 `migrations/`：
@@ -98,9 +100,9 @@ npx wrangler deploy --env production
 - 密码传输：客户端应发送 SHA-256（hex）摘要，后端不处理明文密码
 - CORS：默认允许 `*`，若上线需根据实际前端域名收紧
 
-## Durable Objects（用于匿名聊天房间）
+## Durable Objects（开发中）
 
-该项目包含一个可选的 Durable Object 实现（位于 `src/worker_durable.ts`），可用于把匿名聊天房间的消息存储在 Durable Object 实例中，从而降低对 D1 的写放大并提升小房间的读写延迟。Worker 已实现自动回退：当 Durable Object 未绑定或 DO 请求失败时，会回退到原有的 D1/`anon_chat` 表逻辑。
+该项目未来将包含一个可选的 Durable Object 实现（位于 `src/worker_durable.ts`），可用于把匿名聊天房间的消息存储在 Durable Object 实例中，从而降低对 D1 的写放大并提升小房间的读写延迟。Worker 已实现自动回退：当 Durable Object 未绑定或 DO 请求失败时，会回退到原有的 D1/`anon_chat` 表逻辑。
 
 在 `wrangler.toml` 中添加 Durable Object 绑定示例（将 `ROOM` 绑定到 `ChatRoom` 类）：
 
