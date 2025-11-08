@@ -1,0 +1,20 @@
+{
+  "name": "mood-app-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "migrate": "wrangler d1 migrations apply feelings",
+    "migrate:remote": "wrangler d1 migrations apply feelings --remote",
+    "db:schema:remote": "wrangler d1 execute feelings --remote --command \"PRAGMA table_info(user_table);\"",
+    "words:build": "node scripts/prepare_words.cjs",
+    "words:upload": "node scripts/prepare_words.cjs --upload"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240925.0",
+    "typescript": "^5.6.3",
+    "wrangler": "^4.42.2"
+  }
+}

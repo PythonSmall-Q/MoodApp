@@ -1,0 +1,41 @@
+name = "mood-app-worker"
+main = "src/worker.ts"
+compatibility_date = "2024-09-23"
+
+# Local dev uses this binding name. For production, add database_id.
+[[d1_databases]]
+binding = "DB"
+database_name = "feeling"
+database_id = "11fa52fb-aca5-4b6a-a9dc-93b332739f20"
+# database_id will be auto-provisioned in dev. For production, create with `wrangler d1 create mood-app-db`
+# and then put the generated ID under the production env section below.
+
+[env.production]
+# Uncomment and set your real database_id after `wrangler d1 create mood-app-db`
+[[env.production.d1_databases]]
+binding = "DB"
+database_id = "11fa52fb-aca5-4b6a-a9dc-93b332739f20"
+
+# wrangler.toml (wrangler v3.88.0^)
+[observability]
+enabled = true
+
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+
+#[ Cron Triggers ]
+[triggers]
+# Run at 16:00 UTC daily (equivalent to 00:00 Beijing time)
+crons = ["0 16 * * *"]
+
+[[kv_namespaces]]
+binding = "WORDS"
+# Fill in your KV namespace ID after creation (wrangler kv namespace create WORDS)
+id = "a87533ecfaff43ef9dbc768b7d9e53a1"
+
+[[analytics_engine_datasets]]
+binding = "feeling"
+dataset = "feeling"
