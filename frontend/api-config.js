@@ -1,6 +1,6 @@
 // Page-level API host override. Set this to your API origin when frontend and API are on different domains.
 // Example: window.FEELINGS_API_BASE = 'https://feeling.xmoj-bbs.me';
-window.FEELINGS_API_BASE = 'https://feeling.xmoj-bbs.me';
+window.FEELINGS_API_BASE = 'YOUR_API_BASE';
 
 // Provide a deterministic API helper and base for other scripts to use.
 try {
@@ -58,3 +58,4 @@ try {
 		console.error('api-config fetch patch failed', e);
 	}
 })();
+
